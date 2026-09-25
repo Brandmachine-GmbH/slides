@@ -1,0 +1,30 @@
+.gate {
+  position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  background: #ffffff;
+  background-image:
+    radial-gradient(ellipse 48% 52% at 12% 16%, rgba(160,203,255,0.38), transparent 62%),
+    radial-gradient(ellipse 46% 50% at 88% 86%, rgba(244,194,255,0.38), transparent 62%),
+    radial-gradient(ellipse 40% 42% at 90% 14%, rgba(255,179,122,0.30), transparent 60%);
+}
+.box { width: min(440px, 86vw); text-align: center; }
+.eyebrow { font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-note); letter-spacing: 0.16em; text-transform: uppercase; color: var(--orange); margin: 0 0 14px; }
+.h1 { font-family: "Playfair Display", serif; font-weight: 400; letter-spacing: -0.025em; font-size: var(--type-headline); line-height: 1.05; margin: 0 0 14px; color: var(--ink); }
+.hint { font-family: "Inter", sans-serif; font-size: var(--type-note); line-height: 1.5; color: var(--muted); margin: 0 0 26px; }
+.form { display: flex; gap: 10px; }
+.input {
+  flex: 1; font-family: "Inter", sans-serif; font-size: var(--type-body); padding: 15px 18px;
+  border: 1px solid #e1e1e1; border-radius: 14px; outline: none; color: var(--ink); background: #fff;
+}
+.input:focus { border-color: var(--orange); }
+.btn {
+  font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-body); padding: 15px 24px;
+  border: none; border-radius: 14px; background: var(--orange); color: #fff; cursor: pointer;
+}
+.err { height: 20px; margin-top: 14px; font-family: "Inter", sans-serif; font-size: var(--type-note); color: #d23b3b; transition: opacity 0.15s; }
+.shake .box { animation: gate-shake 0.34s; }
+@keyframes gate-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-9px); }
+  40%, 80% { transform: translateX(9px); }
+}

@@ -1,0 +1,12 @@
+# Netlify build configuration. One Vite build per deck -> dist/<slug>/ (plus a neutral
+# dist/index.html). See build.mjs and README.md.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Cache-Control for deck media is emitted as a dist/_headers file by build.mjs, using concrete
+# per-slug paths. A ":slug" placeholder rule here did not match on Netlify, so we generate the
+# exact paths at build time instead.

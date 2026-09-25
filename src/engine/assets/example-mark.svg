@@ -1,0 +1,7 @@
+<!-- The neutral mark, used when a site has no brand/logo.svg of its own. Two offset sheets,
+     which is the most a deck engine can say about itself without claiming somebody's identity.
+     currentColor throughout, so it takes the ink of whatever slide it sits on. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <rect x="6" y="10" width="28" height="22" rx="2.5" stroke="currentColor" stroke-width="2.5" opacity="0.35"/>
+  <rect x="14" y="17" width="28" height="22" rx="2.5" stroke="currentColor" stroke-width="2.5"/>
+</svg>

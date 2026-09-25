@@ -1,0 +1,613 @@
+.slide { position: absolute; inset: 0; padding: 84px 96px; z-index: 1; }
+
+.eyebrow {
+  font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-label);
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-color); margin: 0 0 14px;
+}
+/* The dot the editorial register puts before a label: the one place orange is still spent on
+   a label, as a mark rather than as the text colour. `content: none` in the default register,
+   so nothing renders at all there. */
+.eyebrow::before, .idx::before, .group::before {
+  content: var(--label-mark);
+  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--orange); margin-right: 9px; vertical-align: 0.14em;
+}
+
+/* title */
+.title { display: flex; flex-direction: column; justify-content: center; }
+.titleH1 { font-size: var(--type-display); }
+.sub { margin-top: 18px; font-size: var(--type-body); color: var(--muted); max-width: 680px; line-height: 1.5; }
+/* The mark, not the word. Same anchor the wordmark had, sized to sit at roughly the optical
+   weight of the old 22px lettering rather than to a round number. */
+.wordmark { position: absolute; left: 96px; bottom: 58px; width: 52px; height: 52px; object-fit: contain; display: block; }
+
+/* title with pictures: copy on the left, photographs bleeding off the right edge. The slide's
+   own padding is dropped so the pictures can reach the edges; the copy column puts it back. */
+.titleSplit { padding: 0; display: grid; grid-template-columns: 1fr 620px; }
+.titleCopy { padding: 0 56px 0 96px; display: flex; flex-direction: column; justify-content: center; }
+.titleMedia { display: grid; gap: 4px; min-height: 0; }
+.titleMediaTrio { grid-template-columns: 1.25fr 1fr; grid-template-rows: 1fr 1fr; }
+.titleMediaTrio .titleShot:first-child { grid-row: span 2; }
+.titleShot { overflow: hidden; min-height: 0; }
+.titleShot img { width: 100%; height: 100%; object-fit: cover; display: block; animation: showFrameIn 0.46s ease-out both; }
+
+/* agenda: denser vertical padding so a many-section list fits without clipping */
+.agenda { display: flex; flex-direction: column; justify-content: center; padding-top: 40px; padding-bottom: 40px; }
+.agendaH1 { font-size: var(--type-headline); }
+.agendaList { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; max-width: 940px; }
+.agendaRow {
+  display: flex; align-items: center; gap: 24px; width: 100%; text-align: left; cursor: pointer;
+  background: var(--card-face); border: 1px solid var(--card-edge); border-bottom-color: var(--card-edge-low);
+  border-radius: 16px; padding: 13px 26px; font-family: inherit;
+  box-shadow: var(--card-lift);
+  transition: transform 0.2s cubic-bezier(.2,.7,.2,1), box-shadow 0.2s, border-color 0.2s;
+}
+.agendaRow:hover {
+  transform: translateY(-2px); box-shadow: var(--card-lift-high);
+  border-color: rgba(255,85,0,0.5); border-bottom-color: rgba(255,85,0,0.5);
+}
+.agendaNum { font-family: "Playfair Display", serif; font-size: var(--type-subhead); color: var(--label-color); min-width: 46px; }
+.agendaText { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.agendaTitle { font-family: "Playfair Display", serif; font-size: var(--type-body); color: var(--ink); letter-spacing: -0.02em; line-height: 1.05; }
+.agendaTag { font-size: var(--type-label); color: var(--muted); line-height: 1.35; }
+.agendaArrow { font-size: var(--type-body); color: #cfcfcf; }
+.agendaRow:hover .agendaArrow { color: var(--orange); }
+
+/* agenda with pictures: the heading holds the left third, the chapters run down the right as
+   plain rows split by hairlines, each with a picture of what it covers. No card surface: with a
+   photograph on every row, a raised card as well is two ways of saying "separate thing". */
+.agendaPictures { display: grid; grid-template-columns: 340px 1fr; gap: 56px; align-items: center; padding-right: 72px; }
+.agendaHead { align-self: center; }
+.agendaGrid { display: grid; grid-auto-rows: 1fr; height: 100%; max-height: 560px; }
+.agendaPicRow {
+  display: grid; grid-template-columns: 44px 1fr 200px; gap: 24px; align-items: center;
+  width: 100%; text-align: left; cursor: pointer; background: none; font-family: inherit;
+  border: 0; border-top: 1px solid var(--mist, #ebe8e4); padding: 12px 0; min-height: 0;
+}
+.agendaPicRow:last-child { border-bottom: 1px solid var(--mist, #ebe8e4); }
+.agendaPicNum { font-size: var(--type-note); color: var(--muted); font-variant-numeric: tabular-nums; }
+.agendaPicTitle {
+  font-family: "Playfair Display", serif; font-size: var(--type-subhead); color: var(--ink);
+  letter-spacing: -0.015em; line-height: 1.12;
+}
+.agendaThumb { height: 100%; max-height: 112px; border-radius: 8px; overflow: hidden; background: var(--mist, #ebe8e4); }
+.agendaThumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s cubic-bezier(.2,.7,.2,1); }
+.agendaPicRow:hover .agendaThumb img { transform: scale(1.04); }
+
+/* divider */
+.divider { display: flex; flex-direction: column; justify-content: center; }
+/* Matches .eyebrow exactly. A section divider's kicker and a slide's eyebrow are the same
+   thing (a small label above a headline) and used to be styled differently, grey sentence case
+   against orange uppercase, which read as an inconsistency rather than a distinction. */
+.idx { font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-label); color: var(--label-color); letter-spacing: 0.14em; text-transform: uppercase; }
+.dividerH1 { font-size: var(--type-display); margin-top: 12px; }
+.tagline { margin-top: 20px; font-size: var(--type-body); color: var(--muted); max-width: 660px; line-height: 1.5; }
+.rule { display: var(--chapter-rule); width: 88px; height: 5px; background: var(--orange); border-radius: 4px; margin-top: 36px; }
+
+/* content */
+.content { display: grid; grid-template-columns: 600px 1fr; gap: 72px; align-items: center; }
+.vidwrap {
+  width: 600px; height: 600px; border-radius: 22px; overflow: hidden; background: #f4f1ea;
+  box-shadow: 0 40px 90px rgba(20,20,40,0.16), 0 10px 26px rgba(20,20,40,0.08);
+}
+.video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.copy { max-width: 560px; }
+.group { font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-label); letter-spacing: 0.13em; text-transform: uppercase; color: var(--label-color); margin: 0 0 14px; }
+.contentH2 { font-size: var(--type-headline); line-height: 1.12; }
+.copyP { margin: 20px 0 0; font-size: var(--type-body); line-height: 1.55; color: var(--copy-ink); }
+
+/* body copy as a bullet list (an alternative to .copyP) */
+.bullets { margin: 22px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 13px; }
+.bullets li { position: relative; padding-left: 26px; font-size: var(--type-body); line-height: 1.5; color: var(--copy-ink); }
+.bullets li::before {
+  content: ""; position: absolute; left: 3px; top: 0.75em; transform: translateY(-50%);
+  width: 7px; height: 7px; border-radius: 50%; background: var(--orange);
+}
+
+/* content with no video/images: a single centered copy column */
+.contentTextOnly { grid-template-columns: 1fr; }
+.contentTextOnly .copy { max-width: 720px; width: 100%; margin: 0 auto; }
+.contentTextOnly .contentH2 { font-size: var(--type-headline); }
+
+/* studio: two portrait shots sharing one grey seamless */
+.contentStudio { align-items: center; }
+.studio {
+  width: 600px; height: 600px; border-radius: 22px; overflow: hidden; display: flex; gap: 10px; padding: 10px;
+  background: linear-gradient(180deg, #e8e8ea 0%, #d6d7d9 100%);
+  box-shadow: 0 40px 90px rgba(20,20,40,0.16), 0 10px 26px rgba(20,20,40,0.08);
+}
+.studioShot { flex: 1 1 0; min-width: 0; border-radius: 14px; overflow: hidden; }
+.studioImg { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* plan: a costed proposal, step/outcome cards plus a highlighted figure */
+.plan { display: flex; flex-direction: column; justify-content: center; padding-top: 64px; padding-bottom: 64px; }
+.planHeadline { font-family: "Playfair Display", serif; font-weight: 400; font-size: var(--type-headline); letter-spacing: -0.025em; line-height: 1.02; color: var(--ink); margin: 0; }
+.planSteps { margin-top: 28px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; }
+/* The cards arrive one after another rather than all at once, and lift under the pointer. Both
+   are small, and both are there because this is usually the slide a deck opens on: three white
+   rectangles appearing in one hit is the moment a deck stops looking made and starts looking
+   generated. Entrance is opacity only (see the note above .show for why transform is not used
+   for entrances); the hover lift is a transform, which is fine because it settles. */
+.planCard {
+  display: flex; flex-direction: column;
+  background: var(--card-face); border: 1px solid var(--card-edge); border-bottom-color: var(--card-edge-low);
+  border-radius: 16px; padding: 22px 24px;
+  box-shadow: var(--card-lift);
+  animation: showFrameIn 0.34s ease-out both;
+  transition: transform 0.2s cubic-bezier(.2,.7,.2,1), box-shadow 0.2s, border-color 0.2s;
+}
+.planCard:hover {
+  transform: translateY(-3px); box-shadow: var(--card-lift-high);
+  border-color: rgba(255,85,0,0.45); border-bottom-color: rgba(255,85,0,0.45);
+}
+.planTag { font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-label); letter-spacing: 0.1em; text-transform: uppercase; color: var(--label-color); margin: 0 0 12px; }
+.planCardTitle { font-family: "Playfair Display", serif; font-size: var(--type-subhead); letter-spacing: -0.02em; line-height: 1.05; color: var(--ink); margin: 0; }
+.planNote { margin: 10px 0 0; font-size: var(--type-note); line-height: 1.45; color: var(--note-ink); }
+.planCost {
+  margin-top: 22px; display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap;
+  background: var(--solid); border-radius: 16px; padding: 20px 28px;
+}
+.planFigure { font-family: "Playfair Display", serif; font-size: var(--type-headline); line-height: 1; letter-spacing: -0.02em; color: var(--orange); }
+.planCaption { font-family: "Inter", sans-serif; font-size: var(--type-note); color: rgba(255,255,255,0.72); }
+.planFootnote { margin: 16px 0 0; font-size: var(--type-label); line-height: 1.4; color: var(--muted); max-width: 940px; }
+
+/* showcase: the imagery itself, edge to edge, minimal type. Every rule below is the settled
+   state; the keyframes at the bottom animate in *from* an offset. So when the PDF export kills
+   animation (export.css) each slide renders exactly as it looks once the motion has finished. */
+/* Motion here is opacity only, deliberately. Animating transform (a Ken Burns settle on the image,
+   a rise on the copy) hands the element to the compositor, and WebKit rasterises that layer once at
+   the pre-animation size, so the element is soft for the whole animation and snaps sharp when the
+   layer is dropped. A cross-fade never resamples, so every frame stays at full resolution. */
+.show { padding: 0; overflow: hidden; }
+.showFrame { position: relative; overflow: hidden; animation: showFrameIn 0.46s ease-out both; }
+.showImg { width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; display: block; }
+
+/* split: images run the full height against a copy column. One image keeps the square almost
+   whole (700px of 720); a pair takes 760px, so each frame trims the empty side margins that
+   studio shots carry anyway and the composition tightens rather than suffers. */
+.showSplit { display: grid; grid-template-columns: 1fr 700px; }
+.showSplit .showMedia { grid-row: 1; grid-column: 2; display: flex; gap: 4px; }
+.showSplit .showCopy { grid-row: 1; grid-column: 1; padding: 0 60px 0 96px; }
+.showSplitLeft { grid-template-columns: 700px 1fr; }
+.showSplitLeft .showMedia { grid-column: 1; }
+.showSplitLeft .showCopy { grid-column: 2; padding: 0 96px 0 60px; }
+.showSplitPair { grid-template-columns: 1fr 760px; }
+.showSplitPair.showSplitLeft { grid-template-columns: 760px 1fr; }
+.showSplit .showFrame { flex: 1 1 0; min-width: 0; height: 100%; }
+.showCopy {
+  display: flex; flex-direction: column; justify-content: center;
+  animation: showCopyIn 0.4s cubic-bezier(.16,.84,.44,1) both; animation-delay: 0.1s;
+}
+.showH2 { font-size: var(--type-headline); line-height: 1.08; }
+.showSplitPair .showH2 { font-size: var(--type-title); }
+.showCopy .copyP { max-width: 440px; }
+
+/* full: bleed to the edges, caption on a glass card */
+.showFull .showMedia { position: absolute; inset: 0; display: flex; gap: 4px; }
+.showFull .showFrame { flex: 1 1 0; min-width: 0; }
+/* The caption sits on a glass card rather than a gradient scrim. A scrim that is subtle enough
+   for the dark campaign shots disappears on the near-white studio shots, and the card also keeps
+   the text off the seam between two duo images. Same glass as the nav (SegNav.module.css). */
+.showCaption {
+  position: absolute; left: 48px; bottom: 48px; z-index: 2; width: 452px;
+  background: rgba(14,14,18,0.68); -webkit-backdrop-filter: blur(22px) saturate(150%); backdrop-filter: blur(22px) saturate(150%);
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 24px 28px 26px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.34);
+  animation: showCopyIn 0.4s cubic-bezier(.16,.84,.44,1) both; animation-delay: 0.16s;
+}
+.showCaptionEyebrow {
+  font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-label); letter-spacing: 0.13em;
+  text-transform: uppercase; color: var(--orange); margin: 0 0 10px;
+}
+.showCaptionH2 { font-size: var(--type-subhead); line-height: 1.1; color: #fff; }
+.showCaptionNote { margin: 12px 0 0; font-size: var(--type-note); line-height: 1.5; color: rgba(255,255,255,0.78); }
+
+/* stack: a heading over full-width blocks, for evidence that is wider than it is tall.
+   Padding is tighter than the rest of the deck on purpose: a 3:1 band is already 380 of the
+   720, so the usual 84/96 would leave nothing for a heading. The band block is the only one
+   that flexes, so it absorbs whatever the fixed blocks leave and `contain` fits the picture
+   inside that. A slide can be over-written but it cannot overflow. */
+.stack { padding: 42px 72px; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
+.stackHead { flex: none; animation: showCopyIn 0.34s cubic-bezier(.16,.84,.44,1) both; }
+.stackH2 { font-size: var(--type-stack-head); line-height: 1.1; }
+.stackNote { margin: 12px 0 0; font-size: var(--type-body); line-height: 1.5; color: var(--copy-ink); max-width: 1000px; }
+.stackBlock { flex: none; min-height: 0; animation: showFrameIn 0.46s ease-out both; }
+
+.stackBand { flex: 1 1 auto; display: flex; flex-direction: column; }
+.stackBandArea { flex: 1 1 auto; min-height: 0; }
+.stackBandImg { width: 100%; height: 100%; object-fit: contain; object-position: 50% 50%; display: block; }
+.stackCaps {
+  flex: none; display: flex; justify-content: space-between; gap: 28px;
+  margin-top: 9px; font-size: var(--type-label); line-height: 1.35; color: var(--muted);
+}
+
+/* mockup: a live product UI, fitted whole. Padding is tight because the frame is 1280x816 on a
+   1280x720 stage, so every pixel of chrome spent on the slide is taken off the software. */
+.mockup { padding: 22px 28px 26px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.mockupHead { flex: none; text-align: center; }
+.mockupH2 { font-size: var(--type-subhead); line-height: 1.1; }
+/* The mockup scales itself to its container's width and keeps its own aspect, so the frame is
+   width-capped from the available height rather than the other way round: 720 minus the heading
+   at 816/1280 gives the widest it can be without overflowing the stage. */
+.mockupFrame { flex: 1 1 auto; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; }
+/* The mockup's own root is width:100% and derives its height from a 1280/816 aspect, which on a
+   720px-tall stage overflows. Drive it from height instead and let width follow, so it is always
+   as large as the remaining space allows whatever the heading costs. Beats hardcoding a max-width
+   per heading variant, which silently goes wrong the first time a title wraps. */
+/* `:first-child` is not decoration, it is specificity. The mockup's own module sets
+   `.root { width: 100% }`, its stylesheet loads after this one (it is a lazy chunk), and at
+   equal specificity source order wins, so a plain `.mockupFrame > *` was silently ignored and
+   the frame overflowed the stage by 215px. This selector outranks it. */
+.mockupFrame > :first-child { height: 100%; width: auto; aspect-ratio: 1280 / 816; }
+
+/* The demo's chapter nav. Bottom-LEFT because the deck's own section bar is centred at the
+   bottom of the viewport, and the two would sit on top of each other anywhere near the middle.
+   It wears the deck's glass rather than the product's chrome (same pill as SegNav and the
+   Contents button) so it reads as the presenter's control over the software, not as a part of
+   the software. It is always visible: three chapters on screen tells a room how long this is
+   going to take, which is worth more here than a clean frame. */
+.chapters {
+  position: absolute; left: 28px; bottom: 20px; z-index: 3;
+  display: flex; align-items: center; gap: 3px;
+  padding: 5px; border-radius: 999px;
+  font-family: "Inter", sans-serif;
+  background: rgba(16,16,20,0.58);
+  -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.16);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.34), 0 0 0 1px rgba(255,255,255,0.07) inset;
+}
+.chapter {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 5px 13px 5px 6px; border: none; border-radius: 999px;
+  background: none; font: inherit; cursor: pointer;
+  color: rgba(255,255,255,0.5);
+  transition: color 0.18s, background 0.18s;
+}
+.chapter:hover { color: #fff; background: rgba(255,255,255,0.1); }
+.chapterNum {
+  width: 19px; height: 19px; flex: none; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: var(--type-ui); font-weight: 700; font-variant-numeric: tabular-nums;
+  background: rgba(255,255,255,0.14); color: rgba(255,255,255,0.7);
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+}
+.chapterTitle { font-size: var(--type-ui); font-weight: 600; letter-spacing: 0.01em; white-space: nowrap; }
+/* Played already. */
+.chapterDone { color: rgba(255,255,255,0.78); }
+.chapterDone .chapterNum { background: rgba(255,255,255,0.3); color: #fff; }
+/* Running now. */
+.chapterOn { color: #fff; }
+.chapterOn .chapterNum { background: var(--orange); color: #fff; }
+/* Queued: nothing has been played yet, and this is what the next click starts. A ring rather
+   than a fill, because it is not running, and the difference has to survive a projector. */
+.chapterNext { color: rgba(255,255,255,0.8); }
+.chapterNext .chapterNum { box-shadow: 0 0 0 1.5px var(--orange); }
+
+/* An inlined figure. Flexes like a band, for the same reason: it takes whatever height the
+   fixed blocks leave, and the drawing fits inside that rather than forcing the slide taller.
+   `color` is set here so a figure authored with fill="currentColor" lands on deck ink without
+   naming a hex, and any var(--orange) in the file resolves because the SVG is in this document. */
+.stackFigure { flex: 1 1 auto; display: block; min-height: 0; color: var(--ink); }
+.stackFigure svg { width: 100%; height: 100%; display: block; overflow: visible; }
+/* No `.stackFigure text { font-family }` rule here on purpose. It looks harmless and is not: a
+   rule matching <text> directly beats a font inherited from an ancestor <g>, so any figure that
+   sets Playfair once on a group had every label quietly forced back to Inter. Injected SVG
+   already inherits the page's Inter as its default, so the rule bought nothing. */
+
+/* A figure in the dark scheme. Figures are drawn files with the STYLE.md palette baked in, as
+   presentation attributes and as inline `style`, and a drawn file cannot read a token. Left
+   alone, their #181b1b headings and logos go black on a black ground. So the dark scheme remaps
+   exactly that palette onto the tokens, and nothing else: an authored colour outside it (a
+   client's own logo colour, orange) is left as drawn. The `style*=` rules need !important
+   because an inline style beats any selector; the attribute ones do not, since a presentation
+   attribute loses to any stylesheet rule. Keep this list to the palette in STYLE.md, or it
+   starts repainting drawings nobody has looked at in the dark. */
+:global(:root[data-color-scheme="dark"]) .stackFigure :is([fill="#181b1b" i], [fill="#000" i], [fill="#000000" i]) { fill: var(--ink); }
+:global(:root[data-color-scheme="dark"]) .stackFigure [stroke="#181b1b" i] { stroke: var(--ink); }
+:global(:root[data-color-scheme="dark"]) .stackFigure :is([stroke="#b8b2a9" i], [stroke="#c3bdb4" i], [stroke="#c9c3ba" i], [stroke="#ded8d0" i]) { stroke: var(--line); }
+:global(:root[data-color-scheme="dark"]) .stackFigure [style*="fill:#181b1b" i] { fill: var(--ink) !important; }
+:global(:root[data-color-scheme="dark"]) .stackFigure [style*="stroke:#181b1b" i] { stroke: var(--ink) !important; }
+:global(:root[data-color-scheme="dark"]) .stackFigure [style*="fill:#5d574e" i] { fill: var(--slide-muted) !important; }
+:global(:root[data-color-scheme="dark"]) .stackFigure :is([style*="fill:#8d867d" i], [style*="fill:#9a938a" i], [style*="fill:#6d675f" i]) { fill: var(--muted) !important; }
+:global(:root[data-color-scheme="dark"]) .stackFigure :is([style*="fill:#ffffff" i], [style*="fill:#fff;" i]) { fill: var(--surface) !important; }
+:global(:root[data-color-scheme="dark"]) .stackFigure [style*="fill:#efece7" i] { fill: var(--mist) !important; }
+:global(:root[data-color-scheme="dark"]) .stackFigure :is([style*="stroke:#c9c3ba" i], [style*="stroke:#c3bdb4" i], [style*="stroke:#ded8d0" i], [style*="stroke:#ddd8d1" i], [style*="stroke:#d8d2ca" i]) { stroke: var(--line) !important; }
+
+.stackTiles { display: grid; gap: 22px; }
+.stackTile { border-top: 2px solid var(--hairline); padding-top: 12px; }
+.stackValue { font-family: "Playfair Display", serif; font-size: var(--type-title); line-height: 1; letter-spacing: -0.02em; color: var(--ink); margin: 0; }
+.stackLabel { font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-note); line-height: 1.3; margin: 9px 0 0; }
+.stackTileNote { font-size: var(--type-label); line-height: 1.42; color: var(--muted); margin: 4px 0 0; }
+
+/* A rate card. Four options to choose between, so each is a real surface with an edge rather
+   than a figure over a rule, using the same card material as a plan slide's cards so it reads as
+   this deck and not as a pricing page.
+
+   NO ORANGE IN HERE, though the drawing this was built from put every label in it. The slide's
+   eyebrow already spends the one accent, and four orange labels is four things competing to be
+   looked at on a slide whose entire argument is that the four are equal. See STYLE.md. */
+.stackCards { display: grid; gap: 18px; align-items: stretch; }
+.stackCard {
+  display: flex; flex-direction: column;
+  background: var(--card-face); border: 1px solid var(--card-edge);
+  border-bottom-color: var(--card-edge-low); border-radius: 14px;
+  padding: 18px 18px 16px; box-shadow: var(--card-lift);
+}
+.cardLabel {
+  font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-label);
+  letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink); margin: 0 0 12px;
+}
+.cardValue {
+  font-family: "Playfair Display", serif; font-size: var(--type-title); line-height: 1;
+  letter-spacing: -0.02em; color: var(--ink); margin: 0;
+}
+/* Inline rather than on its own line, because "€490 / mo" is one thing to read and not two,
+   and Inter rather than Playfair because the unit is a word while the price is a numeral. */
+.cardUnit {
+  font-family: "Inter", sans-serif; font-size: var(--type-note); font-weight: 500;
+  color: var(--muted); letter-spacing: 0; margin-left: 3px;
+}
+.cardRange { font-size: var(--type-note); line-height: 1.4; color: var(--copy-ink); margin: 10px 0 0; }
+/* Pushed to the bottom of its card rather than sitting under the line above it, so the small
+   print lines up across four cards whose middle copy is different lengths. That costs an uneven
+   gap above it, which is the right trade on a row you read across rather than down. */
+.cardNote {
+  font-size: var(--type-label); line-height: 1.42; color: var(--muted);
+  margin: auto 0 0; padding-top: 10px;
+}
+
+/* A quote: priced lines over a hairline grid, with the total sitting on a heavier rule.
+   Two columns rather than a real <table>: every row here is one item and one figure, and a
+   table brought header semantics and column sizing nobody wanted. `tabular-nums` is the part
+   that matters visually, since without it the euro figures do not line up on their own. */
+.stackQuote { display: flex; flex-direction: column; }
+/* The padding is what separates a rate card from the total block above it. The stack's own
+   14px gap is tuned for bands and tiles and is far too tight under a 30px total figure, which
+   otherwise reads as though the rates below are part of the sum. */
+.quoteHead {
+  font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-label);
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+  margin: 0 0 10px; padding-top: 22px;
+}
+.quoteRow {
+  display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: baseline;
+  padding: 11px 0; border-bottom: 1px solid var(--hairline);
+}
+.quoteRow:first-of-type { border-top: 1px solid var(--hairline); }
+.quoteName { font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-note); line-height: 1.3; margin: 0; color: var(--ink); }
+.quoteNote { font-size: var(--type-label); line-height: 1.42; color: var(--muted); margin: 3px 0 0; }
+.quoteAmount {
+  font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-note);
+  font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right;
+  margin: 0; color: var(--ink);
+}
+/* A price offered but not taken. Quieter, and it deliberately sits outside the total. */
+.quoteRate .quoteName { font-weight: 500; color: var(--muted); }
+.quoteRate .quoteAmount { font-weight: 500; color: var(--muted); }
+
+.quoteTotal {
+  display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: baseline;
+  padding: 14px 0 0; border-top: 2px solid var(--ink); margin-top: -1px;
+}
+.quoteTotalLabel {
+  font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-label);
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); margin: 0;
+}
+.quoteTotalFigure {
+  font-family: "Playfair Display", serif; font-size: var(--type-title); line-height: 1;
+  letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--ink); margin: 0;
+}
+
+.stackLegend { display: flex; gap: 26px; font-size: var(--type-label); color: var(--muted); }
+.stackLegend span { display: inline-flex; align-items: center; gap: 7px; }
+.stackLegend i { width: 18px; height: 2px; border-radius: 1px; }
+
+@keyframes showFrameIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes showCopyIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Slide entrance
+   ---------------------------------------------------------------------------
+   The copy on every slide lifts a little and fades in, heading first and body
+   just behind it. This is the motion you notice when clicking through the deck,
+   and it is deliberately NOT part of the view transition: SlideShow remounts the
+   slide on every change (`key={i}`), so these run on a plain CSS animation in
+   every browser. Chrome adds a dissolve over the top (transitions.css); Firefox,
+   which has not shipped that API, still gets all of this.
+
+   Every rule below is written the way the rest of this file is: the base state
+   IS the settled state and the keyframes come in FROM an offset. So the PDF,
+   which switches animation off wholesale (export.css), renders each slide
+   exactly as it looks once the motion has finished.
+
+   12px, not more. On a 720px stage a longer travel stops reading as a settle
+   and starts reading as a slide-in, and it is the one thing a room notices as
+   an effect rather than as production value.
+
+   TEMPO. Everything here used to run about 80% slower: bmRise at 620ms, the
+   showcase frames at 900ms, a caption finishing 1170ms after the keypress. It
+   never dropped a frame (measured: 120fps sustained, no leaked loops, no GL
+   contexts held, heap and DOM flat over five laps of the deck) and it still
+   felt sluggish, because smoothness was never the problem. A slide change
+   starts 16 to 20 overlapping animations, and the last of them landed a full
+   second after the key went down.
+
+   That matters more here than on a page someone scrolls. A deck is driven one
+   keypress at a time by a person mid-sentence, so the entrance is competing
+   with the presenter: past roughly half a second it stops reading as the slide
+   arriving and starts reading as the slide being waited for. Everything was cut
+   by about 45% in one pass, holding every duration and delay in the same
+   proportion, so the choreography is unchanged and only the tempo moved.
+
+   Change these together or not at all. They are a scale, not twelve numbers. */
+/* Rise only. It used to fade as well, and the fade was doing damage rather than nothing.
+   `::view-transition-new(...)` is a LIVE rendering of the real DOM, not a frozen snapshot, so a
+   heading fading itself in is fading pixels the dissolve is already fading. The two compound
+   multiplicatively, which is why type looked muddy through a slide change and why the old copy
+   underneath stayed legible for longer than it should. The dissolve owns opacity on a slide
+   change; an element owns its own position. One job each.
+
+   "Live" is measured in Chrome and is only conditionally true in WebKit, which is why the
+   dissolve is on a named element rather than on the root. See transitions.css. */
+@keyframes bmRise {
+  from { transform: translateY(12px); }
+  to   { transform: translateY(0); }
+}
+@keyframes bmFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* The small orange label fades WITHOUT moving, because in Chrome it is also the
+   element that magic-moves between slides (see transitions.css). A transform
+   here would fight the browser's own tween of the same element. */
+/* The label runs NO entrance animation of its own, and this is the one element where that rule
+   is not a nicety. It carries view-transition-name: bm-label (transitions.css), so the browser
+   lifts it out of the root and tweens it from its old position to its new one, with its own
+   fade. Running bmFadeIn on it as well put two fades on the single element that is meant to be
+   the continuous thing on screen: measured off a screen recording, the label went to zero for
+   about 130ms in the middle of its own magic move, then reappeared and slid into place. Read as
+   the label jumping up, dropping, then rising again.
+
+   It had a comment saying it fades without MOVING, so a transform here would fight the browser's
+   tween. Correct, and it did not go far enough: the opacity fights it too. The transition owns
+   this element's arrival completely. */
+.eyebrow, .group, .idx { animation: none; }
+
+/* THE LANDING, and why this curve is not an asymptotic ease-out.
+   ---------------------------------------------------------------------------------------------
+   The old curve was cubic-bezier(0.2, 0.7, 0.2, 1). Its end slope is exactly ZERO, so the type
+   decelerated to a dead stop, and the last pixel of the 12px rise was spread over 180ms. Movement
+   that slow is under one pixel a frame, so it reads as having arrived while it is still creeping.
+   Then the animation ends, Chrome takes the layer back off the compositor and re-rasterises the
+   text on the pixel grid, and the leftover fraction resolves in a single frame: a 1px hop plus a
+   visible change in crispness, about a tenth of a second after everything else has gone quiet.
+   Measured off a screen recording at 60fps: still for 85-150ms, then one frame of step.
+
+   Whether that hop is a whole pixel or nothing depends on where the heading happens to fall on
+   the device-pixel grid, which depends on window size because the stage is zoomed. That is why
+   it came and went, and why two rounds of measuring on the wrong window size found nothing.
+
+   The intent: the type must still be MOVING when it lands, so there is no silent gap for the
+   snap to appear in. End slope 0.5 (half linear speed) drops the park from 180ms to 59ms. It is
+   still an ease-out, it just does not come to rest before it stops. Do not flatten the second
+   control point back toward (x, 1) without re-measuring the park. */
+.titleH1, .agendaH1, .dividerH1, .contentH2, .planHeadline, .showH2, .stackH2, .mockupH2 {
+  animation: bmRise 0.34s cubic-bezier(0.2, 0.7, 0.6, 0.8) both;
+  animation-delay: 0.03s;
+}
+
+/* Same curve as the headings, for the same reason. Body copy is smaller type, so its snap was
+   never the one anybody noticed, but it has the identical shape and there is no argument for the
+   two arriving on different curves. */
+.sub, .tagline, .copyP, .bullets, .stackNote, .planFootnote, .planCost, .viewerCount,
+.agendaList {
+  animation: bmRise 0.34s cubic-bezier(0.2, 0.7, 0.6, 0.8) both;
+  animation-delay: 0.07s;
+}
+
+.rule { animation: bmRise 0.32s cubic-bezier(0.2, 0.7, 0.6, 0.8) both; animation-delay: 0.1s; }
+.wordmark { animation: bmFadeIn 0.34s ease-out both; animation-delay: 0.13s; }
+
+/* Media fades rather than rises. A moving <video> or a full-bleed photograph is
+   exactly the element the note above .show is about: handing it to the
+   compositor mid-animation is what makes it soft for the duration. Opacity
+   never resamples. */
+.vidwrap, .studio, .mark { animation: bmFadeIn 0.3s ease-out both; }
+
+/* Two containers used to carry their own fade, and their children now carry it
+   instead, so the two do not stack into one slow double-fade. The delays keep
+   the old staging: on a showcase the picture still lands before the words. */
+.showCopy, .stackHead { animation: none; }
+.showCopy .group  { animation-delay: 0.11s; }
+.showCopy .showH2 { animation-delay: 0.14s; }
+.showCopy .copyP, .showCopy .viewerCount { animation-delay: 0.18s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .showFrame, .showCopy, .showCaption, .stackHead, .stackBlock, .planCard { animation: none; }
+  .planCard, .agendaRow { transition: none; }
+  .eyebrow, .group, .idx, .titleH1, .agendaH1, .dividerH1, .contentH2, .planHeadline,
+  .showH2, .stackH2, .mockupH2, .sub, .tagline, .copyP, .bullets, .stackNote,
+  .planFootnote, .planCost, .viewerCount, .agendaList, .rule, .wordmark,
+  .vidwrap, .studio, .mark {
+    animation: none;
+  }
+}
+
+/* The slide number. Bottom RIGHT, which is the one corner nothing else claims: the section bar
+   is centred, the demo's chapter bar is bottom-left, and so is a full showcase's caption card.
+   Muted rather than ink, because it is a reference and not a thing to read. */
+.slideNum {
+  position: absolute; right: 40px; bottom: 28px; z-index: 4;
+  font-family: "Inter", sans-serif; font-size: var(--type-label); font-weight: 600;
+  letter-spacing: 0.06em; font-variant-numeric: tabular-nums;
+  color: #a8a29a;
+  pointer-events: none; user-select: none;
+}
+/* On the slides whose bottom-right corner is a photograph, muted ink has nothing to sit on and
+   the picture underneath could be any colour. Same glass as the nav and the viewer badge, which
+   is what this deck already does everywhere it has to read over an image it does not control. */
+.slideNumOnMedia {
+  right: 26px; bottom: 22px;
+  padding: 4px 11px; border-radius: 999px;
+  color: rgba(255,255,255,0.92);
+  background: rgba(14,14,18,0.55);
+  -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+/* film: the whole stage, no padding, no type. The source is 1920x1080 and the stage is
+   1280x720, so `cover` is an exact fit; it is `cover` rather than `contain` so a future clip cut
+   at a different ratio fills the slide instead of letterboxing inside a letterbox. */
+/* No black ground. The slide either side of this one is near-white, and a black plate under the
+   video meant every dissolve in and out of the film crossed through black, which read as a
+   flicker rather than a cut. The wash shows until the first frame decodes. */
+.film { padding: 0; overflow: hidden; }
+.filmVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* The mark in the dark scheme. It arrives as an <img> of brand/logo.svg, which is one flat black
+   shape, so it cannot follow --ink and would vanish into the ground. Inverting it lands on about
+   the ink's off-white. This is the one filter the dark scheme applies, and it is safe only
+   because the mark is monochrome: a brand whose logo carries colour needs a light variant of
+   the file instead, since an inversion would turn its colours into their opposites. */
+:global(:root[data-color-scheme="dark"]) .wordmark,
+:global(:root[data-color-scheme="dark"]) .mark img { filter: invert(1) brightness(0.93); }
+
+/* outro */
+.outro { display: flex; align-items: center; justify-content: center; }
+.mark { width: 110px; height: 110px; }
+.mark img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+/* viewer: a showcase whose imagery opens the full-viewport inspector. The frame is a
+   button so it is keyboard reachable; the reset keeps it looking like the showcase
+   frames beside it. */
+.viewerFrame {
+  padding: 0; border: 0; background: none; font: inherit; color: inherit;
+  cursor: zoom-in; display: block;
+}
+.viewerFrame:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
+/* Anchor the badge to the image column, not the slide: centred on the slide it drifts off
+   the pictures, and at the bottom it collides with the section nav. */
+.viewerMedia { position: relative; }
+.viewerBadge {
+  position: absolute; left: 50%; transform: translateX(-50%); top: 18px; z-index: 3;
+  display: inline-flex; align-items: center; gap: 7px; pointer-events: none;
+  padding: 7px 13px; border-radius: 999px;
+  background: rgba(14, 14, 18, 0.68); color: #fff;
+  -webkit-backdrop-filter: blur(18px) saturate(150%); backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-label); letter-spacing: 0.01em;
+}
+.viewerCount {
+  font-family: "Inter", sans-serif; font-size: var(--type-label); color: var(--muted);
+  margin: 14px 0 0;
+}
+/* The badge is an affordance for a live deck; in the PDF nothing is clickable. This used to
+   hang off a `.export` class that is not set anywhere, so it never matched. Everything else
+   about the export is scoped to the page wrapper (export.css), so scope this the same way. */
+:global(.bmx-page) .viewerBadge { display: none; }
+
+/* Build stages inside a figure. Opacity only, for the same reason the showcase animates on
+   opacity only: a transform hands the element to the compositor, which rasterises the layer
+   once at its pre-animation size and leaves it soft for the whole transition.
+   `pointer-events: all` (inherited by the children) is what makes a stage hoverable: figure
+   boxes are drawn fill="none", and by default that means only their 1.25px outline is
+   hit-testable, so "hover the box" would mean hover its edge. `all` includes the interior. */
+.stackFigure [data-build] { transition: opacity 0.3s ease; pointer-events: all; }
+@media (prefers-reduced-motion: reduce) { .stackFigure [data-build] { transition: none; } }

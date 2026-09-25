@@ -1,0 +1,35 @@
+.viewport { position: fixed; inset: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+
+/* The deck is authored against a fixed 1280x720 stage and fitted to the viewport by
+   SlideShow.tsx, which picks one of two mechanisms by how far it has to scale.
+
+   ENLARGING, so a screen bigger than 1280x720: CSS zoom. Zoom re-runs layout at the final size,
+   so text, video and images are rendered at full device resolution. Scaling with transform
+   instead stretches a bitmap: any slide holding a <video> (or an element mid-animation) gets
+   promoted to its own GPU layer, that layer is rasterized at the stage's pre-scale size, and the
+   scale then blows it up. That is why paragraph copy beside a playing video looked soft while
+   identical copy on a video-less slide looked sharp.
+
+   REDUCING, so a phone, a tablet, a small laptop window: transform. Zoom cannot be used for a
+   reduction of any size, because it works by rewriting computed font sizes and WebKit refuses to
+   render text under 9px, so it rewrites them back: an iPhone drew the eyebrow, the body copy, the
+   captions and the slide number all at one size, with the eyebrow clipped. The paragraph above
+   does not apply in this direction, because a layer being reduced is oversampled rather than
+   stretched. See TRANSFORM_BELOW in SlideShow.tsx for why the line is at 1 and not lower. */
+.stage {
+  position: relative;
+  width: 1280px; height: 720px;
+  background: var(--stage-ground);
+  overflow: hidden;
+  -webkit-user-select: none; user-select: none;
+}
+
+/* The transform fit, added by SlideShow.tsx. Taken out of the flex centring because the
+   transform is what places it. Also the whole fit on an engine with no CSS zoom at all. */
+.stageScaled { position: absolute; top: 50%; left: 50%; transform-origin: center center; }
+
+/* brand backdrop: soft pastel washes */
+.stage::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: var(--slide-wash);
+}

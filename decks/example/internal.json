@@ -1,0 +1,5 @@
+{
+  "company": "Example",
+  "note": "The deck that ships with the engine. It is also the fixture the build checks: it uses one of every slide kind that needs no photography, so a change that breaks a kind fails here first.",
+  "date": "2026-09-23"
+}

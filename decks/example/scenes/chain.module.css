@@ -1,0 +1,52 @@
+.row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 18px;
+  align-items: stretch;
+  width: 100%;
+}
+
+.box {
+  border: 1px solid var(--card-edge-low);
+  border-radius: 3px;
+  padding: 20px 22px 22px;
+  background: var(--card-face);
+  transition: opacity 220ms ease, background 220ms ease, color 220ms ease, border-color 220ms ease;
+}
+
+/* A box that has not been played yet is held back rather than hidden, so the shape of the whole
+   drawing is on screen from the first press and nothing jumps sideways as it fills in. */
+.pending { opacity: 0.16; }
+
+.lit {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+.lit .note { color: rgba(255, 255, 255, 0.72); }
+
+.tag {
+  margin: 0 0 10px;
+  font-size: var(--type-label);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--orange);
+}
+
+.title {
+  margin: 0 0 8px;
+  font-family: "Playfair Display", serif;
+  font-weight: 400;
+  font-size: var(--type-subhead);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.note {
+  margin: 0;
+  font-size: var(--type-note);
+  line-height: 1.45;
+  color: var(--muted);
+}

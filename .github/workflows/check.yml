@@ -1,0 +1,30 @@
+# Two gates, and the first one matters more than the second.
+#
+# check-public asserts that nothing private has landed here: no UUID outside the example deck's
+# own slug, no internal.json, no generated edge-function module, nothing oversized. It runs with
+# NO denylist, because the list of names worth catching cannot live in a public repo. The checks
+# are shape-based for exactly that reason, so they keep working in a fork that has never heard of
+# whoever wrote them.
+#
+# Then a real build, which is the only way to know the engine still works with no brand, no
+# mockups and one example deck: the configuration that every other check is blind to.
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/check-public.mjs .
+      - run: npx tsc --noEmit
+      - run: make build

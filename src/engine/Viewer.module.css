@@ -1,0 +1,98 @@
+/* Full-viewport image inspector. Sits above the deck stage and owns the real viewport,
+   so it is authored in device pixels rather than the deck's 1280x720 units. */
+
+.root {
+  position: fixed; inset: 0; z-index: 60;
+  display: grid; grid-template-rows: auto 1fr auto;
+  background: #1c1c1f; color: #e7e7ea;
+  font-family: "Inter", system-ui, sans-serif;
+  user-select: none;
+  animation: viewerIn 0.18s ease-out both;
+}
+@keyframes viewerIn { from { opacity: 0 } to { opacity: 1 } }
+
+/* tabs -------------------------------------------------------------------- */
+.tabs {
+  display: flex; align-items: stretch; gap: 6px;
+  padding: 10px 12px calc(10px + var(--chrome-top, 0px));
+  background: #232327; border-bottom: 1px solid #34343a;
+  overflow-x: auto; scrollbar-width: thin;
+}
+.tab {
+  flex: 0 0 auto; text-align: left; cursor: pointer;
+  padding: 7px 12px; border: 1px solid #3a3a42; border-radius: 8px;
+  background: #2a2a30; color: inherit; font: inherit; line-height: 1.25;
+}
+.tab:hover { background: #33333b; }
+.on, .on:hover { background: var(--orange, #ff5500); border-color: var(--orange, #ff5500); color: #fff; }
+.k { display: inline-block; min-width: 15px; font-weight: 700; opacity: 0.6; margin-right: 5px; font-size: var(--type-label); }
+.label { font-weight: 600; font-size: var(--type-label); }
+.sub { display: block; font-size: var(--type-ui); opacity: 0.72; margin-top: 1px; }
+.on .sub { opacity: 0.85; }
+
+.close {
+  margin-left: auto; flex: 0 0 auto; align-self: center; cursor: pointer;
+  padding: 7px 12px; border: 1px solid #3a3a42; border-radius: 8px;
+  background: #2a2a30; color: inherit; font: 600 12px "Inter", sans-serif;
+}
+.close:hover { background: #33333b; }
+
+/* stage ------------------------------------------------------------------- */
+.stage { position: relative; overflow: hidden; cursor: grab; touch-action: none; }
+.dragging { cursor: grabbing; }
+
+/* The canvas carries the whole view as one transform, so panning and zooming never
+   touch layout. transform-origin 0 0 keeps the maths simple: translate positions the
+   top-left, scale grows from it, so baking scale into pixel sizes moves nothing. */
+.canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: auto; }
+.canvas img {
+  position: absolute; top: 0; left: 0; display: block;
+  max-width: none; -webkit-user-drag: none;
+}
+
+.loading {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: var(--type-note); opacity: 0.7; pointer-events: none;
+}
+
+/* bottom bar -------------------------------------------------------------- */
+.bar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 9px 12px calc(9px + var(--chrome-bottom, 0px));
+  background: #232327; border-top: 1px solid #34343a; font-size: var(--type-label);
+}
+.bar b { color: #fff; font-weight: 600; }
+.bar span { opacity: 0.75; }
+.btn {
+  padding: 5px 10px; border: 1px solid #3a3a42; border-radius: 7px;
+  background: #2a2a30; color: inherit; font: inherit; cursor: pointer;
+}
+.btn:hover { background: #33333b; }
+
+/* A rule before the download buttons. They hand over a file, which is a different kind of act
+   from changing the zoom, and a gap on its own did not say so. */
+.sep { width: 1px; height: 18px; background: #3a3a42; }
+
+/* Brighter than the view controls, and the only thing in this bar carrying an icon. The deck's
+   orange is already spoken for by the active tab above, so this earns its emphasis from contrast
+   rather than from hue: two orange areas on one screen and neither is the answer to "look here". */
+.dl {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #35353d; border-color: #4c4c58; color: #fff; font-weight: 600;
+}
+.dl:hover { background: #41414b; }
+.dl:disabled { opacity: 0.55; cursor: default; }
+
+.hint { margin-left: auto; opacity: 0.55 !important; }
+kbd {
+  background: #34343a; border-radius: 4px; padding: 1px 5px;
+  font: 11px ui-monospace, monospace;
+}
+
+/* On a phone the toolbar labels crowd out the image; keep the controls, drop the prose. */
+@media (max-width: 640px) {
+  .hint { display: none; }
+  .sub { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) { .root { animation: none; } }

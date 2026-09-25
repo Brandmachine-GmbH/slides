@@ -1,0 +1,58 @@
+.bar {
+  position: fixed; left: 50%; transform: translateX(-50%); z-index: 20;
+  bottom: calc(var(--chrome-bottom, 0px) + 14px + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: stretch;
+  /* Size to the section titles rather than a fixed width, so nothing is truncated. Past the
+     viewport it caps and scrolls sideways (the active section is scrolled into view in
+     SegNav.tsx), which keeps decks with many or long section titles usable. */
+  width: max-content;
+  max-width: calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none; -ms-overflow-style: none;
+  overscroll-behavior-x: contain;
+  font-family: "Inter", sans-serif;
+  /* Dark translucent glass: the bar sits over the letterboxing on most viewports and over the
+     slide itself at exactly 16:9, so it has to read against both a near-black and a white
+     backdrop. A light tint only worked over the letterboxing. */
+  background: rgba(16,16,20,0.58); -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.16); border-radius: 999px; padding: 0 6px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.34), 0 0 0 1px rgba(255,255,255,0.07) inset;
+}
+.bar::-webkit-scrollbar { display: none; }
+
+.seg {
+  flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 5px; padding: 8px 15px; border-left: 1px solid rgba(255,255,255,0.11);
+}
+.seg:first-child { border-left: none; }
+
+.segLabel {
+  background: none; border: none; padding: 0; cursor: pointer; font: inherit; font-size: var(--type-ui); font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.62); transition: color 0.15s;
+  white-space: nowrap;
+}
+.segLabel:hover { color: rgba(255,255,255,0.86); }
+.segActive .segLabel { color: #fff; }
+
+.ticks { display: flex; align-items: center; justify-content: center; gap: 5px; height: 6px; }
+.tick {
+  width: 5px; height: 5px; border-radius: 50%; padding: 0; border: none; cursor: pointer;
+  background: rgba(255,255,255,0.26); transition: background 0.18s, transform 0.18s;
+}
+.tick:hover { background: rgba(255,255,255,0.8); transform: scale(1.3); }
+.tickPast { background: rgba(255,255,255,0.46); }
+.tickCur { width: 6px; height: 6px; background: #fff; }
+
+/* Touch devices in landscape: hide the bar for a clean full-bleed slide (tap still navigates).
+   Desktop is a fine pointer, so it never matches and the bar always shows. */
+@media (pointer: coarse) and (orientation: landscape) {
+  .bar { display: none; }
+}
+
+/* Reveal on approach. The bar sits over the slide at 16:9, so on a desktop it hides until the
+   pointer comes near the bottom edge. Opacity and a small drop rather than display:none, so it
+   fades in place and never reflows the deck. It stays interactive only while shown. */
+.barHidden { opacity: 0; transform: translateX(-50%) translateY(14px); pointer-events: none; }
+.barShown  { opacity: 1; transform: translateX(-50%) translateY(0); }
+.bar { transition: opacity 0.22s ease, transform 0.22s ease; }
+@media (prefers-reduced-motion: reduce) { .bar { transition: none; } }

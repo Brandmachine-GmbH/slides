@@ -1,0 +1,68 @@
+/* Editor chrome only. The slides themselves bring their own tokens (tokens.css) and are drawn
+   exactly as a client sees them; everything here is the page around them.
+   Prefixed --bmx-* so nothing can collide with a token a slide relies on. */
+
+:root {
+  --bmx-sheet: #f4f1ec;
+  --bmx-frame: #fffefc;
+  --bmx-ink: #181b1b;
+  --bmx-muted: #7d766c;
+  --bmx-rule: #e0d9cd;
+  --bmx-cut: #a8352a;
+  --bmx-edit: #0d6b4f;
+  --bmx-focus: #ff5500;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bmx-sheet: #131517;
+    --bmx-frame: #1c1f22;
+    --bmx-ink: #eeebe6;
+    --bmx-muted: #948d83;
+    --bmx-rule: #2f3338;
+    --bmx-cut: #e0705f;
+    --bmx-edit: #4fbf98;
+    --bmx-focus: #ff7a33;
+  }
+}
+:root[data-theme="dark"] {
+  --bmx-sheet: #131517;
+  --bmx-frame: #1c1f22;
+  --bmx-ink: #eeebe6;
+  --bmx-muted: #948d83;
+  --bmx-rule: #2f3338;
+  --bmx-cut: #e0705f;
+  --bmx-edit: #4fbf98;
+  --bmx-focus: #ff7a33;
+}
+
+* { box-sizing: border-box; }
+
+/* tokens.css pins html/body to the viewport and hides overflow, because a deck IS the viewport:
+   a slideshow never scrolls. The editor is a document that does, and it imports tokens.css for
+   the deck's own colours and --slide-wash, so it has to hand the scrollbar back. */
+html, body, #root { height: auto; min-height: 100%; overflow: visible; }
+
+body {
+  margin: 0;
+  background: var(--bmx-sheet);
+  color: var(--bmx-ink);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-feature-settings: "salt";
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+:focus-visible { outline: 2px solid var(--bmx-focus); outline-offset: 2px; border-radius: 2px; }
+
+button {
+  font: inherit; font-size: 12px; font-weight: 600;
+  padding: 7px 14px; border-radius: 3px;
+  border: 1px solid var(--bmx-rule);
+  background: var(--bmx-frame); color: var(--bmx-ink);
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+button:hover { border-color: var(--bmx-muted); }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }

@@ -1,0 +1,29 @@
+/* PDF export only: STATIC TrueType instances at the exact weights the deck renders.
+   Chromium embeds static TTF as small, subsetted, selectable vector fonts in a PDF;
+   variable woff2 would fall back to bloated, non-selectable Type3 outlines.
+   These .ttf files are frozen from the variable woff2 (see scripts/make-static-fonts.py).
+
+   The serif file is called DeckSerif because Playfair Display carries a Reserved Font Name
+   under the OFL and an instanced copy is a Modified Version, which may not use that name. The
+   CSS family below is a local alias for matching and is unaffected, so nothing else in the
+   engine has to know. Do not "fix" the filename back. */
+@font-face {
+  font-family: "Playfair Display";
+  font-style: normal; font-weight: 400; font-display: block;
+  src: url("./assets/fonts/static/DeckSerif-400.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal; font-weight: 400; font-display: block;
+  src: url("./assets/fonts/static/Inter-400.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal; font-weight: 600; font-display: block;
+  src: url("./assets/fonts/static/Inter-600.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal; font-weight: 700; font-display: block;
+  src: url("./assets/fonts/static/Inter-700.ttf") format("truetype");
+}

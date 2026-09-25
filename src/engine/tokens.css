@@ -1,0 +1,203 @@
+/* @font-face lives in fonts-variable.css (live decks) / fonts-static.css (PDF export).
+   The active one is chosen by the "@active-fonts" alias in vite.config.ts. */
+
+:root {
+  --ink: #181b1b;
+  --muted: #737373;
+  --orange: #ff5500;
+
+  /* THE TYPE SCALE
+     -------------------------------------------------------------------------
+     Every font-size in the engine comes from here. There is no second opinion,
+     and `make build` fails on a raw px font-size in a stylesheet so it cannot
+     quietly grow a ninth step (see checkTypeScale in build.mjs).
+
+     Before this there were twenty-four distinct sizes in slides.module.css
+     alone. Not twenty-four uses: twenty-four different numbers, each chosen
+     while that one slide was being built. A heading was 34px on a stack slide
+     and 33px on a paired showcase, an eyebrow 13px in one place and 12px in
+     another, and nothing anywhere said which to reach for. That is what made
+     the deck feel subtly assembled rather than designed, and it is why no
+     amount of restyling one slide ever fixed it.
+
+     Steps are chosen for a 1280x720 stage, so each is clearly a different size
+     at the back of a room rather than merely a different number.
+
+     A role names what a piece of type IS, not how big it happens to be here.
+     Where a slide's frame is genuinely tighter than the rest (a stack slide
+     giving most of its height to a picture, a mockup slide where every line of
+     type is taken off the software) it steps DOWN the scale rather than
+     inventing a size between two steps. That is the whole discipline. */
+  --type-display:  68px;   /* a slide that is only a statement: the title, a section divider */
+  --type-headline: 40px;   /* the heading of a working slide */
+  --type-title:    30px;   /* a heading in a tighter frame, and big numerals */
+  --type-subhead:  24px;   /* a card or box heading, inside a slide */
+  --type-body:     18px;   /* paragraphs, bullets, taglines */
+  --type-note:     14px;   /* a secondary line under a card, a caption beside a figure */
+  --type-label:    12px;   /* uppercase labels, footnotes, captions, the slide number */
+  --type-ui:       11px;   /* the presenter's own controls, which sit OVER a slide */
+
+  /* The backdrop every slide sits on. It is a token because three places draw it and they must
+     not drift: the live stage, the PDF page, and the thumbnails in the admin editor. It used to
+     be two copies of the same three gradients with a comment on one saying "mirrored from" the
+     other, which is a comment that only stays true by luck. */
+  --slide-wash:
+    radial-gradient(ellipse 48% 52% at 12% 16%, rgba(160,203,255,0.38), transparent 62%),
+    radial-gradient(ellipse 46% 50% at 88% 86%, rgba(244,194,255,0.38), transparent 62%),
+    radial-gradient(ellipse 40% 42% at 90% 14%, rgba(255,179,122,0.30), transparent 60%);
+
+  /* Card material, for the raised surfaces on a slide: the overview's rows and a plan slide's
+     cards. They were separately invented, both a flat #fff rectangle with a #ececec hairline and
+     a 6% shadow, which is what a wireframe of a card looks like rather than a card. One
+     definition so they cannot drift apart again, and so a third one starts out right.
+
+     The face is not flat white: it warms very slightly downward, which is what stops a white
+     card on a near-white slide from reading as a drawn outline. The lift is three shadows, not
+     one, because a single blurred shadow is the tell of a box that is not really sitting on
+     anything: a tight contact shadow, a short mid, and a wide soft one for the ambient.
+     The PDF drops shadows on purpose (export.css) and keeps the face and the edge, so the
+     printed card still reads as a surface. */
+  --card-face: linear-gradient(178deg, #ffffff 0%, #fdfbfa 60%, #faf6f1 100%);
+  --card-edge: #e8e1d7;
+  --card-edge-low: #ddd4c8;
+  --card-lift:
+    0 1px 1px rgba(24,27,27,0.04),
+    0 3px 6px -3px rgba(24,27,27,0.07),
+    0 18px 34px -20px rgba(24,27,27,0.30);
+  --card-lift-high:
+    0 1px 1px rgba(24,27,27,0.05),
+    0 6px 13px -5px rgba(24,27,27,0.10),
+    0 34px 56px -26px rgba(24,27,27,0.42);
+
+  /* The knobs the editorial register turns (see Deck.theme). Each default is exactly what the
+     engine drew before these existed, so a deck that does not opt in cannot tell they are here.
+     --label-mark is a `content` value: `none` draws nothing, "" draws the dot. */
+  --label-color: var(--orange);
+  --label-mark: none;
+  --chapter-rule: block;
+  --type-stack-head: var(--type-title);
+
+  /* The knobs the dark scheme turns (see colorScheme.ts). Same promise as the editorial knobs
+     above: each light value is byte for byte the literal it replaced, so with the toggle off
+     nothing can move. They exist only where a literal would have stayed dark on a dark ground or
+     white under off-white type; everything else keeps its literal on purpose.
+     --stage-ground is the paper, --surface a flat raised face (a chip, a prompt box), and --solid
+     the one inverted panel a plan slide draws, which is ink in light and cannot be in dark,
+     because ink is then the colour of the type sitting on it. */
+  --stage-ground: #ffffff;
+  --surface: #ffffff;
+  --solid: var(--ink);
+  --copy-ink: #2c2f2f;
+  --note-ink: #5a5a5a;
+  --hairline: #e2ded7;
+}
+
+/* THE EDITORIAL REGISTER
+   -------------------------------------------------------------------------
+   Opted into per deck with `theme: "editorial"`, never the default, because every client deck
+   shares this file and restyling it in place would redraw decks that were already sent.
+
+   Orange stops being a text colour. It had become the colour of every label, every chapter rule
+   and the claim boxes, which is emphasis everywhere and therefore nowhere. Here it survives only
+   as a small mark (the dot before a label, a marker in a scene), and the labels themselves go
+   grey. The wash goes too: with real photography on the slides it tinted the pictures.
+
+   The steps are even: 1.5x between the big roles, about 1.33x between the small ones. The old
+   scale jumped 68 to 40 and then crept 30, 24, 18, which is why a working slide's headline read
+   as small on an empty stage. A scene's heading steps up to the headline size for the same
+   reason: it is the slide's headline, and at 30px it read as a caption. */
+:root[data-deck-theme="editorial"] {
+  --type-display:  72px;
+  --type-headline: 48px;
+  --type-title:    32px;
+  --type-stack-head: var(--type-headline);
+  --stone: #7a7d7c;
+  --mist: #ebe8e4;
+  --graphite: #3d4040;
+  --label-color: var(--stone);
+  --label-mark: "";
+  --chapter-rule: none;
+  --slide-wash: none;
+}
+
+/* THE DARK SCHEME
+   -------------------------------------------------------------------------
+   A second axis, independent of the register above: the presenter flips it live from the
+   button beside Contents (or `d`), per viewer, and it never reaches the PDF or the editor,
+   because only SlideShow sets data-color-scheme. So a deck needs no edit to have it, and the
+   light version every client was sent stays exactly what it was.
+
+   A deliberate dark studio, not an inversion. The ground is near-black with a trace of the ink's
+   green-grey in it (pure #000 makes every photograph look pasted on), type is off-white rather
+   than white, and a card is a face a few steps above the ground with a darker, heavier lift,
+   because on a dark ground a shadow is felt rather than seen. Orange is untouched: it was only
+   ever a mark, and a mark reads on either ground. Photographs and videos get no filter at all.
+
+   Everything that was "ink on pale" for emphasis becomes "off-white on dark" by flipping --ink,
+   which keeps STYLE.md's rule that the strongest mark is the ground's opposite.
+
+   The tokens only ever defined here (--slide-ground, --slide-muted, --line, --faint, --on-ink,
+   and --mist in the classic register) are the ones deck scenes already read with a fallback, so light
+   decks keep their fallback literal and only dark gets a value. Do not add them to :root. */
+:root[data-color-scheme="dark"] {
+  color-scheme: dark;
+  --ink: #ecebe7;
+  --muted: #9c9d99;
+  --copy-ink: #cfd0cc;
+  --note-ink: #a9aaa6;
+  --hairline: #2f3232;
+  --stage-ground: #141616;
+  --slide-ground: #141616;
+  --slide-muted: #a8a39b;
+  --surface: #1f2222;
+  --solid: #222525;
+  --line: #3b3e3e;
+  --faint: #6c6f6c;
+  --on-ink: #141616;
+  --stone: #8f9291;
+  --mist: #252828;
+  --graphite: #c9cbc9;
+
+  --card-face: linear-gradient(178deg, #202323 0%, #1d1f1f 60%, #1a1c1c 100%);
+  --card-edge: #2e3131;
+  --card-edge-low: #262828;
+  --card-lift:
+    0 1px 1px rgba(0,0,0,0.30),
+    0 3px 6px -3px rgba(0,0,0,0.40),
+    0 18px 34px -20px rgba(0,0,0,0.75);
+  --card-lift-high:
+    0 1px 1px rgba(0,0,0,0.35),
+    0 6px 13px -5px rgba(0,0,0,0.45),
+    0 34px 56px -26px rgba(0,0,0,0.85);
+
+  /* The classic wash survives as a glow rather than a tint: the same three positions at about a
+     third of the strength, because at full strength on a dark ground it read as coloured fog. */
+  --slide-wash:
+    radial-gradient(ellipse 48% 52% at 12% 16%, rgba(160,203,255,0.10), transparent 62%),
+    radial-gradient(ellipse 46% 50% at 88% 86%, rgba(244,194,255,0.09), transparent 62%),
+    radial-gradient(ellipse 40% 42% at 90% 14%, rgba(255,179,122,0.08), transparent 60%);
+}
+/* Both attributes present outranks either one alone, so the editorial register keeps its bare
+   ground in the dark as well; without this the dark block above, being later, would repaint the
+   wash the editorial register removed. */
+:root[data-color-scheme="dark"][data-deck-theme="editorial"] {
+  --slide-wash: none;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; height: 100%; }
+html, body {
+  overflow: hidden;
+  background: #0c0c0d;
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--ink);
+}
+
+h1, h2, h3 {
+  font-family: "Playfair Display", serif;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.02;
+  margin: 0;
+  color: var(--ink);
+}

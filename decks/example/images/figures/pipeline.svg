@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" width="1000" height="200">
+  <g font-family="Inter, system-ui, sans-serif">
+    <g transform="translate(0,20)">
+      <rect x="0" y="0" width="260" height="120" rx="3" fill="none" stroke="#ddd4c8" stroke-width="1.5"/>
+      <text x="20" y="34" font-size="11" font-weight="600" letter-spacing="1.6" style="fill:var(--orange)">ONE FILE</text>
+      <text x="20" y="70" font-family="Playfair Display, serif" font-size="26" letter-spacing="-0.4" fill="currentColor">deck.ts</text>
+      <text x="20" y="96" font-size="13" fill="#5d574e">Passcodes, sections, slides.</text>
+    </g>
+    <path d="M285 100 L345 100" stroke="#ddd4c8" stroke-width="1.5"/>
+    <path d="M338 94 L346 100 L338 106 Z" fill="#ddd4c8"/>
+    <g transform="translate(370,20)">
+      <rect x="0" y="0" width="260" height="120" rx="3" fill="none" stroke="#ddd4c8" stroke-width="1.5"/>
+      <text x="20" y="34" font-size="11" font-weight="600" letter-spacing="1.6" style="fill:var(--orange)">ONE COMMAND</text>
+      <text x="20" y="70" font-family="Playfair Display, serif" font-size="26" letter-spacing="-0.4" fill="currentColor">make build</text>
+      <text x="20" y="96" font-size="13" fill="#5d574e">One bundle per deck.</text>
+    </g>
+    <path d="M655 100 L715 100" stroke="#ddd4c8" stroke-width="1.5"/>
+    <path d="M708 94 L716 100 L708 106 Z" fill="#ddd4c8"/>
+    <g transform="translate(740,20)">
+      <rect x="0" y="0" width="260" height="120" rx="3" fill="none" stroke="#181b1b" stroke-width="1.5"/>
+      <text x="20" y="34" font-size="11" font-weight="600" letter-spacing="1.6" style="fill:var(--orange)">ONE LINK</text>
+      <text x="20" y="70" font-family="Playfair Display, serif" font-size="26" letter-spacing="-0.4" fill="currentColor">A secret URL</text>
+      <text x="20" y="96" font-size="13" fill="#5d574e">Unguessable, per deck.</text>
+    </g>
+    <text x="0" y="180" font-size="12" fill="#8d867d">The slug is the privacy model. Nothing else about a deck is secret.</text>
+  </g>
+</svg>

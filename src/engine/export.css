@@ -1,0 +1,104 @@
+/* PDF export layout: every slide stacked as its own 1280x720 print page, no overlays.
+   Loaded only by ExportView (export builds). 960pt x 540pt == 1280px x 720px @96dpi;
+   points keep the page box an exact integer and avoid the fractional-inch rounding
+   that otherwise inserts a blank page after each slide. */
+@page { size: 960pt 540pt; margin: 0; }
+
+/* tokens.css pins html/body to one viewport with overflow:hidden (good for the live
+   one-slide-at-a-time app, fatal for a stacked multi-page print). Undo it here. */
+html, body, #root {
+  height: auto !important;
+  overflow: visible !important;
+  margin: 0;
+  background: #fff;
+}
+
+/* The printed page. Normally exactly the slide; taller when the deck uses handout text, in
+   which case ExportView injects both the @page size and the height here together. */
+.bmx-page {
+  position: relative;
+  width: 1280px; height: 720px;
+  background: #ffffff;
+  overflow: hidden;
+  break-after: page;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.bmx-page:last-child { break-after: auto; }
+
+/* The slide itself, always exactly 1280x720 whatever the page around it is doing. Keeping this
+   box fixed is what lets the page grow for a handout without the slide being scaled to fit:
+   nothing is resampled, and a slide prints identically in a deck with handouts and one without.
+   It is also the positioned ancestor the slide number anchors to. */
+.bmx-slide {
+  position: relative;
+  width: 1280px; height: 720px;
+  overflow: hidden;
+}
+
+/* The band under the slide. Deliberately quiet: it is reference material for someone reading
+   alone, not part of the slide, and it should not compete with it when the two are on one page.
+   Left margin matches a slide's own 96px so the text sits on the same line as the headline
+   above it. */
+.bmx-handout {
+  height: 120px;
+  padding: 20px 96px 0;
+  border-top: 1px solid #ebe5dc;
+  overflow: hidden;
+}
+.bmx-handout p {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  font-size: var(--type-note);
+  line-height: 1.55;
+  color: #5d574e;
+  max-width: 1000px;
+}
+
+/* Entrance motion is for the live deck only. Slide styles are authored so that the base state
+   IS the settled state and the keyframes animate in from an offset, so simply switching
+   animation off here renders every slide in its finished position. Without this the printer
+   catches slides mid-fade (or, with fill-mode "both", never started at all). */
+.bmx-page *, .bmx-page *::before, .bmx-page *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* A box-shadow on a rounded element makes Chromium rasterize that element into a per-page
+   bitmap in the PDF (each studio card / agenda row became a multi-hundred-KB image, repeated
+   on every slide). Drop shadows for the PDF so those elements stay vector. Purely cosmetic. */
+.bmx-page * { box-shadow: none !important; }
+
+/* The deck backdrop, from the one definition of it in tokens.css. Gradients stay vector in the
+   PDF (no rasterization), so this costs almost nothing.
+   On .bmx-slide rather than .bmx-page: the page can be taller than the slide, and the wash
+   belongs to the slide. Painted across the whole page it would tint the handout band too. */
+.bmx-slide::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: var(--slide-wash);
+}
+
+/* The note on a film or demo page (ExportView). Top right, the one corner a demo page leaves empty
+   (its frame runs to the bottom edge), set like a label so it reads as the page talking, not the slide. */
+.bmx-moving {
+  position: absolute; right: 40px; top: 24px; z-index: 5;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 14px; border-radius: 999px;
+  background: #fff; border: 1px solid #e3dfd9;
+  font-family: "Inter", sans-serif; font-size: var(--type-label); font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; color: #3d4040;
+}
+.bmx-moving::before {
+  content: ""; width: 0; height: 0;
+  border-left: 7px solid var(--orange); border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent;
+}
+
+/* The one shadow the PDF keeps: under a demo's window, which without it reads as a flat
+   screenshot pasted on the page. Not on the window itself, which the rule above would then
+   rasterize, UI and all; on an empty box drawn behind it (the embed root's ::before), so the
+   only thing turned into a bitmap is a blurred rectangle. `bmx-frame` is set on the mockup
+   slide's frame in slides.tsx; its first child is the embed's root, sized to the window. */
+.bmx-page .bmx-frame > :first-child { position: relative; }
+.bmx-page .bmx-frame > :first-child::before {
+  content: ""; position: absolute; inset: 0; border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(20, 18, 40, 0.22), 0 5px 16px rgba(0, 0, 0, 0.10) !important;
+}

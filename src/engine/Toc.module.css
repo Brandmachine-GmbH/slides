@@ -1,0 +1,73 @@
+/* The presenter's corner: the colour-scheme toggle and Contents, as one fixed group. The group
+   owns the position (and the view-transition name, see Toc.tsx) so the buttons sit side by side
+   without either needing to know how wide the other is. Contents stays the right-hand one, where
+   it always was, so a presenter's hand finds it in the same place. */
+.dock {
+  position: fixed; right: calc(16px + env(safe-area-inset-right, 0px));
+  top: calc(var(--chrome-top, 0px) + 14px + env(safe-area-inset-top, 0px));
+  z-index: 21; display: flex; align-items: stretch; gap: 8px;
+}
+.btn {
+  font-family: "Inter", sans-serif; font-size: var(--type-ui);
+  font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.86);
+  /* matches the SegNav bar: same glass, same pill */
+  background: rgba(16,16,20,0.58); border: 1px solid rgba(255,255,255,0.16); border-radius: 999px;
+  padding: 9px 18px; cursor: pointer;
+  -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.34), 0 0 0 1px rgba(255,255,255,0.07) inset;
+}
+.btn:hover { color: #fff; border-color: rgba(255,85,0,0.65); }
+/* The scheme toggle: the same glass pill as Contents with an icon in it, squared up so it reads
+   as a switch beside a menu rather than as a second menu. */
+.scheme { display: inline-flex; align-items: center; justify-content: center; padding: 0 11px; }
+.scheme svg { width: 14px; height: 14px; display: block; }
+
+.scrim { position: fixed; inset: 0; z-index: 30; background: rgba(10,10,12,0.5); opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+.scrimOpen { opacity: 1; pointer-events: auto; }
+
+.panel {
+  position: fixed; top: 0; left: 0; height: 100%; width: 430px; max-width: 86vw; z-index: 31; background: #fff;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(.4,0,.2,1), box-shadow 0.3s;
+  /* THE SHADOW BELONGS TO THE OPEN STATE ONLY.
+     A shadow with no offset and a 60px blur paints in every direction, including out of the side
+     the panel is parked on. Closed, this panel sits at translateX(-100%) entirely off-screen and
+     its shadow still bled about 70px back across the slide: measured 41 levels of luminance at
+     the very left edge, ramping to nothing by x=78. Invisible on a letterboxed window, because
+     it lands on the near-black surround; obvious at 16:9, where it lands on white.
+
+     It also flickered once the slide dissolve moved off the root capture, because a view
+     transition's pseudo-elements draw in the top layer, above this panel's z-index 31. So the
+     capture covered the shadow for the length of the change and it reappeared afterwards. Both
+     symptoms are the same root cause: a closed panel should cast nothing. */
+  display: flex; flex-direction: column; overflow-y: auto;
+  padding: max(38px, env(safe-area-inset-top, 0px)) 0 max(28px, env(safe-area-inset-bottom, 0px));
+  padding-left: env(safe-area-inset-left, 0px);
+}
+.panelOpen { transform: translateX(0); box-shadow: 0 0 60px rgba(0, 0, 0, 0.32); }
+
+.head { font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-ui); letter-spacing: 0.16em; text-transform: uppercase; color: var(--orange); padding: 0 32px 12px; }
+.nav { display: flex; flex-direction: column; }
+.item { text-align: left; background: none; border: none; cursor: pointer; font-family: "Inter", sans-serif; color: var(--ink); width: 100%; line-height: 1.3; }
+.item:hover { background: #faf7f2; }
+.lvl0 { font-size: var(--type-note); font-weight: 600; padding: 8px 32px; color: var(--muted); }
+.group { border-top: 1px solid #f0f0f0; margin-top: 6px; padding-top: 3px; }
+.section { font-family: "Playfair Display", serif; font-size: var(--type-body); letter-spacing: -0.02em; padding: 12px 32px 5px; color: var(--ink); }
+.slide { font-size: var(--type-label); color: var(--note-ink); padding: 6px 32px 6px 46px; }
+.current { color: var(--orange); }
+.slide.current { box-shadow: inset 3px 0 0 var(--orange); background: #fff7f2; }
+
+/* Touch devices in landscape: hide the Contents button (and any open panel) for a clean slide.
+   Desktop is a fine pointer, so it never matches and Contents always shows. */
+@media (pointer: coarse) and (orientation: landscape) {
+  .dock, .panel, .scrim { display: none; }
+}
+
+/* The panel in the dark scheme. It is presenter furniture rather than slide, but it slides in
+   over the slide in front of the room, and a white sheet over a dark deck is the brightest thing
+   that can happen to a darkened room. Overrides rather than tokens because none of these colours
+   is shared with anything a slide draws. */
+:global(:root[data-color-scheme="dark"]) .panel { background: #181a1a; }
+:global(:root[data-color-scheme="dark"]) .item:hover { background: #202323; }
+:global(:root[data-color-scheme="dark"]) .group { border-top-color: #262929; }
+:global(:root[data-color-scheme="dark"]) .slide.current { background: #221a15; }

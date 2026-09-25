@@ -1,0 +1,22 @@
+/* Beats left to play, bottom left. Deliberately the mirror of .slideNum bottom right: same
+   anchor distance, same muted grey, so the two corners read as one pair of margin marks rather
+   than as a control. See BuildTrack.tsx for why it is not orange and not clickable. */
+.track {
+  position: absolute; left: 40px; bottom: 28px; z-index: 4;
+  display: flex; align-items: center; gap: 7px;
+  pointer-events: none; user-select: none;
+}
+
+/* Two states and no third. On a projector at the back of a room the message is a count, not a
+   gradient: filled is played, hollow is left. A "current" state in a third grey would be the
+   one distinction that does not survive the throw. */
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px #cfc8bf;
+  transition: box-shadow 0.3s ease, background 0.3s ease;
+}
+.dotOn { background: #a8a29a; box-shadow: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dot { transition: none; }
+}

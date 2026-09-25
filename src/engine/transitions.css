@@ -1,0 +1,123 @@
+/* Slide-to-slide motion, part one of two.
+   ---------------------------------------------------------------------------
+   Imported by SlideShow only, so it never reaches the PDF export (ExportView
+   stacks every slide at once and navigates nowhere).
+
+   This file is the CROSS-FADE BETWEEN SLIDES. The motion you actually notice is
+   the other half: each slide's own copy rising and fading in, which lives in
+   slides.module.css under "Slide entrance". The split is deliberate and worth
+   understanding before changing either.
+
+   What is here needs the View Transitions API; what is there is a plain CSS
+   animation on a remounted element, which every browser runs. So the deck's
+   motion degrades rather than breaks: without the API the frame cuts and the
+   new copy still rises. Chrome and Safari 18+ both have it. Firefox is the one
+   that cuts.
+
+   Do not read that as "present from Chrome". This deck is presented from
+   Safari, and the note further down about the root capture is there because
+   the two engines were NOT equivalent and it took a day of measuring Chrome to
+   notice, since every measurement came back clean in the browser nobody was
+   using.
+
+   The other thing the API buys is that any element carrying a
+   `view-transition-name` on BOTH sides is lifted out of the cross-fade and has
+   its own box tweened from where it was to where it now is. That is Keynote's
+   magic move, done by the browser, and the deck uses it for the small orange
+   label that most slides carry. */
+
+/* What takes part, declared here rather than next to the components.
+   ---------------------------------------------------------------------------
+   `data-vt` attributes rather than the components' own CSS Modules, so the
+   names exist ONLY where this file is loaded. That matters: slides.module.css
+   is also loaded by the PDF export and by the admin editor's contact sheet,
+   and the sheet draws thirty slides on one page, which would be thirty
+   elements claiming the name `bm-label`. A duplicate name aborts a transition
+   outright. Neither of those pages transitions today, so it would be a trap
+   set for later rather than a bug now, and this costs nothing to avoid.
+
+   Every slide component renders at most ONE label (`.eyebrow`, `.group` or
+   `.idx`), which is what makes a single shared name safe: no deck can produce
+   a second one, because that would take an engine change. */
+[data-vt="label"]    { view-transition-name: bm-label; }
+[data-vt="segnav"]   { view-transition-name: bm-segnav; }
+[data-vt="contents"] { view-transition-name: bm-contents; }
+
+/* THE SLIDE DISSOLVE IS NOT ON THE ROOT, AND THAT IS A SAFARI FIX.
+   ---------------------------------------------------------------------------------------------
+   The spec says the OLD state is a static image and the new state is a live DOM region, and
+   Chrome implements it that way: the incoming slide is real compositor content, so the copy's
+   `bmRise` entrance animates smoothly inside the dissolve.
+
+   WebKit cannot do that FOR THE ROOT specifically. RenderViewTransitionCapture force-sets
+   non-visible overflow on `::view-transition-new(root)` so that it holds exactly the snapshot
+   containing block, which makes canUseExistingLayers() always false for it. ViewTransition then
+   falls back to snapshotElementVisualOverflowClippedToViewport, a SOFTWARE snapshot taken on the
+   main thread, and re-takes it every animation frame. So for the length of the dissolve every
+   pixel of the incoming slide is repainted on the main thread, and a slide change is exactly
+   when React mounts a whole scene. Any main-thread work freezes the drawn headline mid-rise and
+   it leaps when the thread frees. Measured in WebKit under a 150ms stall: frozen ~3 frames, then
+   7px of its 12px travel in one frame. Chrome under the identical stall: 2 frames, 3px.
+
+   A NON-root capture escapes that path, so naming the stage viewport instead puts the incoming
+   slide back on live layers in both engines. `:root` gives up its name so there is no second,
+   redundant capture of the whole page; the nav and the Contents button keep their own names and
+   are unaffected, and anything else outside the stage simply is not captured, which is right
+   because none of it moves.
+
+   This is the fix for a flicker that was invisible in Chrome for a whole day of measuring. If
+   you are ever tempted to put the dissolve back on `root`, the symptom returns in Safari only. */
+:root                { view-transition-name: none; }
+[data-vt="stage"]    { view-transition-name: bm-stage; }
+
+/* A dissolve, with no travel of its own. There used to be a 22px sideways push
+   here and it was the wrong gesture for a deck: it read as a slideshow control
+   rather than as one thought giving way to the next, and it fought the copy,
+   which rises. The frame now simply changes underneath while the type moves.
+
+   ONLY THE INCOMING SLIDE ANIMATES, and that is the whole fix for a DIFFERENT
+   flicker from the Safari one above. Fading BOTH snapshots looks like the obvious way
+   to cross-fade and is wrong: Chrome composites these pseudo-elements with
+   `mix-blend-mode: normal`, so two layers at 0.8 leave (1 - 0.8)^2 = 4% of
+   every pixel uncovered, and what shows through the hole is the page canvas,
+   which tokens.css paints #0c0c0d because a deck is normally letterboxed
+   against near-black. The result was the entire slide dimming toward black for
+   about 200ms on every single change. Measured at 5.4 to 5.8 points of
+   luminance out of 245, in 7 of 7 transitions; painting the page white took it
+   to 0.00, which is what proved the mechanism.
+
+   It read as intermittent because it is invisible on dark slides and obvious on
+   bright ones, which is why the value-chain slide (a saturated orange field
+   between two near-white slides) was the one that got reported.
+
+   With the outgoing snapshot left opaque underneath, the backdrop can never
+   show through, so the incoming one can fade on a plain curve. An earlier
+   attempt had it reach full opacity at 45% to "cover" the old one sooner; that
+   was treating this same symptom from the wrong end and is not needed now. */
+::view-transition-old(bm-stage) { animation: none; }
+::view-transition-new(bm-stage) { animation: bmSlideIn 0.26s cubic-bezier(0.4, 0, 0.2, 1) both; }
+
+@keyframes bmSlideIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* The magic-moved label runs slightly longer than the dissolve, so it is still
+   travelling as the new slide settles. That is what makes it read as one thing
+   moving rather than two things fading. Kept proportional to the entrance scale
+   in slides.module.css; see the TEMPO note there before changing either. */
+::view-transition-group(bm-label) {
+  animation-duration: 0.32s;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* The bottom nav and the Contents button are fixed to the viewport, not to the
+   slide, so they hold position and cross-fade quickly in place. */
+::view-transition-group(bm-segnav),
+::view-transition-group(bm-contents) { animation-duration: 0.2s; }
+
+/* Whoever asked for less motion gets the old behaviour: SlideShow skips the
+   transition entirely, so this is belt and braces for a viewer who flips the
+   setting mid-deck, while a transition is already running. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}
