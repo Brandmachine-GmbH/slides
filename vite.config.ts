@@ -2,7 +2,7 @@ import { defineConfig, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
 import ts from "typescript";
 import { createReadStream, existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { dirname, join, normalize } from "node:path";
+import { dirname, join, normalize, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // One build per deck. build.mjs sets VITE_DECK; each build emits dist/<slug>/ with
@@ -65,8 +65,13 @@ function deckMedia(): PluginOption {
       server.middlewares.use((req, res, next) => {
         const url = req.url?.split("?")[0] ?? "";
         if (!roots.some((r) => url.startsWith(r))) return next();
-        const file = normalize(join(deckDir, decodeURIComponent(url)));
-        if (!file.startsWith(deckDir) || !existsSync(file)) return next();
+        let file: string;
+        try { file = normalize(join(deckDir, decodeURIComponent(url))); } catch { return next(); }
+        // Inside the media folder the URL named, not merely inside the deck: `..%2f` would
+        // otherwise reach the deck's own internal.json and slug.txt, and a bare prefix test lets
+        // decks/acme reach decks/acme-pricing. This runs before Vite's host check, so a
+        // DNS-rebinding page could have read either.
+        if (!roots.some((r) => file.startsWith(join(deckDir, r.slice(1, -1)) + sep)) || !existsSync(file)) return next();
         const { size } = statSync(file);
         const ext = file.slice(file.lastIndexOf(".")).toLowerCase();
         res.setHeader("Content-Type", MIME[ext] ?? "application/octet-stream");

@@ -105,4 +105,5 @@ fonts:
 #   make export-public                 -> ../slides-engine
 #   make export-public DEST=/some/dir
 export-public:
+	@test -f scripts/export-public.mjs || { echo "export-public only exists in the private repo this engine is exported from."; exit 1; }
 	@node scripts/export-public.mjs $(DEST)

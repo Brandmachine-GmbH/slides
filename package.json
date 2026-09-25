@@ -1,6 +1,7 @@
 {
   "name": "slides",
   "private": true,
+  "license": "MIT",
   "version": "0.2.0",
   "type": "module",
   "description": "A slideshow engine for client decks: each deck is data in decks/<name>/, built to its own bundle and served at a secret per-deck URL.",

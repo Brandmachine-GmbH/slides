@@ -53,7 +53,9 @@ const NEVER = [
   { test: (p) => p === ".env" || basename(p) === ".env", why: "secrets" },
 ];
 
-const TEXT = /\.(ts|tsx|js|mjs|jsx|json|css|html|svg|md|txt|yml|yaml|toml|py)$/;
+// The Makefile and .gitignore have no extension to match on, and both are exported from the
+// private repo, so a slug or a name added to either would otherwise be published unscanned.
+const TEXT = /\.(ts|tsx|js|mjs|jsx|json|css|html|svg|md|txt|yml|yaml|toml|py)$|(^|\/)Makefile$|(^|\/)\.gitignore$/;
 
 const files = [];
 const walk = (d) => {

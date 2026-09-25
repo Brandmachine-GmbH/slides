@@ -17,7 +17,7 @@
 // want the real gate exercised, that is what `make admin-live` is for.
 import { createServer } from "node:http";
 import { createReadStream, existsSync, statSync } from "node:fs";
-import { dirname, join, normalize, extname } from "node:path";
+import { dirname, join, normalize, extname, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -48,6 +48,15 @@ const html = (body, status = 200) => ({ status, body,
   headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
 
 const server = createServer((req, res) => {
+  // Binding to 127.0.0.1 keeps other machines out but not a web page you have open: it can point
+  // its own hostname at 127.0.0.1 (DNS rebinding) and read the hub with every slug and note.
+  // Such a request still carries the attacker's hostname, so anything else is refused.
+  const host = (req.headers.host ?? "").replace(/:\d+$/, "");
+  if (host !== "localhost" && host !== "127.0.0.1") { res.writeHead(403); return res.end("no"); }
+  try { handle(req, res); } catch { if (!res.headersSent) res.writeHead(400); res.end(); }
+});
+
+function handle(req, res) {
   const url = new URL(req.url, "http://localhost");
   const path = decodeURIComponent(url.pathname);
 
@@ -70,7 +79,7 @@ const server = createServer((req, res) => {
 
   // ---- everything else is a file in dist/ --------------------------------------------------
   let file = normalize(join(dist, path));
-  if (!file.startsWith(dist)) { res.writeHead(403); return res.end("no"); }
+  if (file !== dist && !file.startsWith(dist + sep)) { res.writeHead(403); return res.end("no"); }
   if (existsSync(file) && statSync(file).isDirectory()) file = join(file, "index.html");
   if (!existsSync(file)) {
     res.writeHead(404, { "content-type": "text/html; charset=utf-8" });
@@ -94,7 +103,7 @@ const server = createServer((req, res) => {
   }
   res.writeHead(200, { "Content-Length": size });
   createReadStream(file).pipe(res);
-});
+}
 
 server.on("error", (err) => {
   if (err.code === "EADDRINUSE") {

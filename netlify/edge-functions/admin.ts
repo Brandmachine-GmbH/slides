@@ -16,7 +16,12 @@ import { BRAND } from "./lib/brand.js";
 import { HUB_HTML } from "./lib/hub.js";
 import { editorHtml } from "./lib/editor.js";
 
-export const config = { path: ["/admin", "/admin/*"] };
+// One shared password and no username, and the code saying so is public, so guessing is the
+// attack. 30 a minute per IP is far above anyone clicking around the hub and far below a script.
+export const config = {
+  path: ["/admin", "/admin/*"],
+  rateLimit: { windowLimit: 30, windowSize: 60, aggregateBy: ["ip", "domain"] },
+};
 
 const COOKIE = "bm_admin";
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 days, so it behaves like a bookmark

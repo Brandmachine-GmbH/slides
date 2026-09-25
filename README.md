@@ -57,9 +57,19 @@ shows on `/admin` and never reaches the client; write a new one or leave it out.
 
 Then edit `decks/acme/deck.ts` and run `make dev acme`.
 
-**Keep your decks in a private repo.** This repo's CI runs `check-public.mjs`, which fails on
-any slug other than the example's, on purpose. A fork that holds real client decks should be a
-private one, where that check has no reason to run.
+**Keep your decks in a private repository, and do not use GitHub's Fork button for it.** A fork
+of a public repository is always public, so client decks committed to one publish their secret
+URLs. Clone this repo, create a new private repository, and push to that instead:
+
+```
+git clone https://github.com/Brandmachine-GmbH/slides.git my-decks
+cd my-decks
+git remote set-url origin git@github.com:<you>/my-decks.git   # a PRIVATE repo you created
+```
+
+Then delete the `check-public` step from `.github/workflows/check.yml` in your copy. It fails on
+any slug other than the example's, on purpose, because its job is to keep this public repo empty
+of real decks; yours is meant to hold them.
 
 ## A deck
 
@@ -112,4 +122,5 @@ a deploy that the gate actually attached.
 
 ## Licence
 
-MIT, except the fonts, which are OFL 1.1. See `LICENSE` and `THIRD-PARTY.md`.
+MIT, see `LICENSE`. The fonts (OFL 1.1) and two Lucide icons (ISC) are under their own
+licences, see `THIRD-PARTY.md`.

@@ -215,7 +215,7 @@ export interface QuoteLine {
   item: string;
   /** one line spelling out what that covers */
   note?: string;
-  /** the figure exactly as it should read, e.g. "€3,000", "€800 each", "quoted separately" */
+  /** the figure exactly as it should read, e.g. "€1,200", "€800 each", "quoted separately" */
   amount: string;
   /** true: a price we are quoting but the client has not taken, so it draws quieter and sits
    *  outside the total. For the rate-card half of an offer: "each further item, €800". */

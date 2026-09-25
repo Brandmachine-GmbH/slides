@@ -13,8 +13,8 @@
 import type { Deck } from "@engine/types";
 
 const deck: Deck = {
-  // The universal passcode is the site's own name, set in brand.json. A real deck adds the
-  // client's brand alongside it, which is the one they are told.
+  // Any of these opens the deck; matching ignores case, spaces and punctuation. A real deck
+  // usually lists the client's brand, which is what they are told.
   passcodes: ["example"],
 
   title: {

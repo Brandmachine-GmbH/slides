@@ -106,6 +106,11 @@ for (const { name, slug } of deckJobs) {
   slugOwner.set(slug, name);
 }
 
+if (deckJobs.length === 0) {
+  console.error("✗ No decks to build: add a folder under decks/ with a deck.ts and a slug.txt.");
+  process.exit(1);
+}
+
 console.log(`— building ${deckJobs.length} decks + the editor, ${JOBS} at a time\n`);
 const t0 = Date.now();
 
@@ -306,7 +311,8 @@ const hubDir = join(root, "hub");
     `const CSS = ${JSON.stringify(css)};\n` +
     `export const EDITOR_DECKS = Object.keys(DECKS);\n` +
     `export function editorHtml(name) {
-  const boot = DECKS[name];
+  // hasOwn, not DECKS[name]: "constructor" would otherwise find Object and render it.
+  const boot = Object.hasOwn(DECKS, name) ? DECKS[name] : null;
   if (!boot) return null;
   return \`<!doctype html><html lang="en"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">

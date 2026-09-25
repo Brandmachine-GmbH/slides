@@ -11,7 +11,9 @@ export function Gate({
   passcodes: string[];
   onUnlock: () => void;
 }) {
-  const ok = passcodes.map(norm);
+  // A passcode with no Latin letters or digits normalises to "", which an empty submit would
+  // match, so a deck passcoded in another script would open on Enter. Dropped instead.
+  const ok = passcodes.map(norm).filter(Boolean);
   const [err, setErr] = useState(false);
   const [shake, setShake] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
