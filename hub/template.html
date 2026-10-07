@@ -46,10 +46,13 @@
     background:#fafafa; border-radius:999px; padding:3px 9px; color:var(--muted); }
   .copy:hover { background:#f0f0f0; color:var(--ink); }
   /* A button rather than a link, though all it does is navigate: the whole card is already an
-     <a>, and an <a> inside an <a> is invalid, so the parser hoists it out and the card breaks. */
-  .edit { font:inherit; font-size:11px; cursor:pointer; border:1px solid var(--line);
-    background:#fff; border-radius:999px; padding:3px 9px; color:var(--muted); }
-  .edit:hover { background:#f0f0f0; color:var(--ink); }
+     <a>, and an <a> inside an <a> is invalid, so the parser hoists it out and the card breaks.
+     Drawn as the card's second action rather than as one more grey pill: the editor is where a
+     deck is reordered, cut, retyped and commented on, and in grey beside "Copy link" it was
+     read as a minor extra and not found at all. Ink, not orange: orange is the eyebrow's. */
+  .edit { font:inherit; font-size:11px; font-weight:600; cursor:pointer; border:1px solid var(--ink);
+    background:#fff; border-radius:999px; padding:3px 10px; color:var(--ink); }
+  .edit:hover { background:var(--ink); color:#fff; }
   .empty { color:var(--muted); font-size:14px; padding:26px 0; }
   mark { background:#ffe8dc; color:inherit; border-radius:3px; }
 </style>
@@ -106,7 +109,7 @@ function render(q) {
       <div class="meta">
         <span class="pill">passcode <b>${hl(d.passcodes[0] || "", q)}</b></span>
         <button class="copy" data-slug="${d.slug}">Copy link</button>
-        <button class="edit" data-deck="${d.name}">Edit copy</button>
+        <button class="edit" data-deck="${d.name}">Review &amp; edit</button>
         ${when(d.date) ? `<span class="when">${when(d.date)}</span>` : ""}
       </div>
     </a>`).join("") : `<p class="empty">Nothing matches “${esc(q)}”.</p>`;

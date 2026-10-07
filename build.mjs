@@ -336,7 +336,7 @@ const hubDir = join(root, "hub");
   if (!boot) return null;
   return \`<!doctype html><html lang="en"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex"><title>\${boot.name} \u00b7 edit</title>
+<meta name="robots" content="noindex"><title>\${boot.name} \u00b7 review & edit</title>
 \${CSS.map((h) => \`<link rel="stylesheet" href="\${h}">\`).join("")}
 </head><body><div id="root"></div>
 <script>window.__EDIT__=\${JSON.stringify(boot).replace(/</g, "\\\\u003c")}</script>
