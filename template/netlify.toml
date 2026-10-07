@@ -1,0 +1,8 @@
+# One Vite build per deck -> dist/<slug>/, plus a neutral dist/index.html and the /admin edge
+# function. Set ADMIN_PASSWORD and AUTH_SECRET in the site's environment variables.
+[build]
+  command = "npx slides build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"

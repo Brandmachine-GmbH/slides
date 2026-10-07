@@ -80,10 +80,39 @@
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-.row { display: grid; grid-template-columns: 296px 1fr; grid-template-rows: auto auto; align-items: start; }
-.row .thumbHost { grid-column: 1; grid-row: 1; }
-.row .bar { grid-column: 1; grid-row: 2; }
-.row .fields, .row .empty { grid-column: 2; grid-row: 1 / 3; border-left: 1px solid var(--bmx-rule); }
+/* The slide column's width per size. Percentages of the row, resolved where the variable is
+   used, so they follow the window. Each size is capped by what it leaves the copy column (380px
+   at M, 400px at L), because a slide big enough to judge is no use if the field next to it wraps
+   every headline onto three lines; at 1440 that cap never bites and at 1280 it barely does.
+   S stays at the width this view always had, so anyone who never touches the switch sees no
+   change. */
+.rows { --rows-side: 296px; }
+.rows[data-size="m"] { --rows-side: max(240px, min(560px, 40%, calc(100% - 380px))); }
+.rows[data-size="l"] { --rows-side: max(240px, min(60%, calc(100% - 400px))); }
+
+/* overflow: clip, not the card's hidden. Hidden makes the card a scroll container, and a sticky
+   child sticks to its nearest scroll container, so the slide would have stuck to a box that
+   never scrolls, which is to say not at all. Clip cuts the corners the same and scrolls nothing. */
+.row {
+  display: grid; grid-template-columns: var(--rows-side) minmax(0, 1fr); align-items: start;
+  overflow: clip;
+}
+/* The slide stays in view while a long row's fields scroll past it, so retyping card seven of a
+   plan slide still shows the slide it is on. Offset by the measured header (see EditApp). */
+.row .side {
+  grid-column: 1; position: sticky; top: calc(var(--bmx-head, 64px) + 14px);
+}
+.row .fields, .row .empty { grid-column: 2; align-self: stretch; border-left: 1px solid var(--bmx-rule); }
+
+.sizeBar {
+  display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 14px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--bmx-muted);
+}
+.seg { display: flex; }
+.seg button { padding: 5px 12px; border-radius: 0; margin-left: -1px; }
+.seg button:first-child { margin-left: 0; border-radius: 3px 0 0 3px; }
+.seg button:last-child { border-radius: 0 3px 3px 0; }
 
 .fields { display: grid; gap: 11px; align-content: start; padding: 14px 16px 16px; }
 .f label {
@@ -98,6 +127,83 @@
 }
 .changed textarea, .changed input { border-color: var(--bmx-edit); box-shadow: inset 3px 0 0 var(--bmx-edit); }
 .empty { padding: 14px 16px; font-size: 12px; color: var(--bmx-muted); }
+
+/* ---------------------------------------------------------------------------- comments
+   A dot is drawn in fixed colours rather than the chrome's tokens, because it sits on the slide,
+   and the slide under it can be white, a photograph or a dark scheme. Ink with a white ring reads
+   on all three; a token would have flipped with the page and vanished on a slide that did not.
+   A dot's only orange is the ring of the one being written right now, the "you are here" mark.
+   A sheet of orange dots would make orange mean nothing on this page. */
+.kbd {
+  margin-left: 6px; padding: 0 4px; border: 1px solid currentColor; border-radius: 2px;
+  font-size: 10px; opacity: 0.6;
+}
+.hint {
+  flex-basis: 100%; margin-top: -4px;
+  font-size: 12px; color: var(--bmx-muted);
+}
+.stale {
+  display: flex; align-items: center; gap: 14px;
+  margin: 16px 22px 0; padding: 10px 14px;
+  border: 1px solid var(--bmx-rule); box-shadow: inset 3px 0 0 var(--bmx-cut); border-radius: 3px;
+  background: var(--bmx-frame); font-size: 12.5px; color: var(--bmx-muted);
+}
+.stale b { color: var(--bmx-ink); font-weight: 600; }
+.stale button { flex: none; }
+
+.dots { position: absolute; inset: 0; pointer-events: none; }
+.placing { pointer-events: auto; cursor: crosshair; }
+.dot {
+  position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; padding: 0;
+  display: grid; place-items: center;
+  border: 0; border-radius: 50%;
+  font-size: 10px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums;
+  background: #181b1b; color: #fff;
+  box-shadow: 0 0 0 2px #fff, 0 1px 4px rgba(0, 0, 0, 0.35);
+  pointer-events: auto; cursor: pointer;
+  animation: dotIn 0.16s ease-out;
+}
+.dot:hover { box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px rgba(24, 27, 27, 0.55), 0 1px 4px rgba(0, 0, 0, 0.35); }
+.dotOn, .dotOn:hover { box-shadow: 0 0 0 2px var(--orange), 0 1px 4px rgba(0, 0, 0, 0.35); }
+/* Hollow for a comment placed on an earlier build, the same convention as the deck's own play
+   dots (filled is settled, hollow is still to check). */
+.dotOld { background: #fff; color: #181b1b; box-shadow: 0 0 0 1.5px #181b1b, 0 0 0 3px #fff; }
+@keyframes dotIn { from { opacity: 0; transform: scale(0.7); } }
+
+.pop {
+  position: fixed; z-index: 25;
+  padding: 11px 12px 12px;
+  background: var(--bmx-frame); color: var(--bmx-ink);
+  border: 1px solid var(--bmx-rule); border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 8px 28px rgba(0, 0, 0, 0.18);
+  animation: popIn 0.14s ease-out;
+}
+@keyframes popIn { from { opacity: 0; transform: translateY(4px); } }
+.popHead { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.popHead b { font-weight: 600; }
+.popNum {
+  width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%;
+  background: var(--bmx-ink); color: var(--bmx-frame);
+  font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.popOld { margin-left: auto; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; color: var(--bmx-cut); }
+.popOn {
+  margin: 6px 0 8px; font-size: 11.5px; color: var(--bmx-muted);
+  overflow-wrap: anywhere;
+}
+.popOn code {
+  display: block; margin-top: 2px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 10.5px;
+}
+.pop textarea {
+  display: block; width: 100%; padding: 7px 9px; font: inherit; font-size: 13px;
+  color: var(--bmx-ink); background: transparent;
+  border: 1px solid var(--bmx-rule); border-radius: 2px; resize: vertical;
+}
+.popBar { display: flex; gap: 8px; margin-top: 9px; }
+.popBar button { padding: 5px 11px; }
+
+@media (prefers-reduced-motion: reduce) { .dot, .pop { animation: none; } }
 
 .scrim {
   position: fixed; inset: 0; z-index: 30; display: grid; place-items: center;
@@ -194,6 +300,8 @@
 
 @media (max-width: 760px) {
   .row { grid-template-columns: 1fr; }
+  /* Stacked, a pinned slide would sit over the very fields it is meant to sit beside. */
+  .row .side { position: static; }
   .row .fields, .row .empty {
     grid-column: 1; grid-row: auto;
     border-left: 0; border-top: 1px solid var(--bmx-rule);

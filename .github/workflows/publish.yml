@@ -1,0 +1,40 @@
+# Publishes @brandmachine/slides to npm when a version tag is pushed, and at no other time.
+#
+# Releasing is a deliberate act by a person: bump "version" in package.json, commit, then
+# `git tag v0.1.1 && git push origin v0.1.1`. Merging to main never publishes anything.
+#
+# No npm token exists anywhere. npm's trusted publishing lets this workflow prove who it is with
+# GitHub's own OIDC identity, which is what `id-token: write` is for, and npm attaches a
+# provenance statement naming the commit that built the release. A token in the repo's secrets
+# would be one more thing that can leak, for no benefit.
+#
+# One-time setup on npmjs.com, after the first version exists: the package's Settings, Trusted
+# Publisher, GitHub Actions, repository Brandmachine-GmbH/slides, workflow publish.yml.
+name: publish
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      # Trusted publishing needs npm 11.5 or later; Node 22 ships an older one.
+      - run: npm install -g npm@latest
+      - run: npm ci
+      # The tag must match package.json, or a release could go out under the wrong number.
+      - run: test "v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
+      - run: node scripts/check-public.mjs .
+      - run: npx tsc --noEmit
+      - run: npm run check
+      - run: npm publish

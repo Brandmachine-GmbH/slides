@@ -2,7 +2,11 @@
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "skipLibCheck": true,
     "moduleResolution": "bundler",
@@ -16,9 +20,22 @@
     "noUnusedParameters": true,
     "baseUrl": ".",
     "paths": {
-      "@engine/*": ["src/engine/*"]
+      "@engine/*": [
+        "src/engine/*"
+      ],
+      "@brandmachine/slides": [
+        "src/engine/index.ts"
+      ]
     },
-    "types": ["vite/client"]
+    "types": [
+      "vite/client"
+    ]
   },
-  "include": ["src", "decks", "mockups"]
+  "include": [
+    "src",
+    "template/decks"
+  ],
+  "exclude": [
+    "src/netlify"
+  ]
 }

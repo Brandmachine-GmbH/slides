@@ -9,8 +9,7 @@
  * stylesheet, deliberately: a drawing written for one slide is exactly where a ninth type size
  * gets invented. */
 import { useState } from "react";
-import type { SceneProps } from "@engine/types";
-import { useBuildStages } from "@engine/useBuildStages";
+import { useBuildStages, type SceneProps } from "@brandmachine/slides";
 import s from "./chain.module.css";
 
 export default function Chain({ steps, controllerRef }: SceneProps) {

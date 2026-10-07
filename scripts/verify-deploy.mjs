@@ -13,10 +13,21 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-const brandFile = existsSync(join(repoRoot, "brand.json"))
-  ? join(repoRoot, "brand.json")
+const userRoot = process.env.SLIDES_ROOT || process.cwd();
+const brandFile = existsSync(join(userRoot, "brand.json"))
+  ? join(userRoot, "brand.json")
   : join(repoRoot, "src", "engine", "brand.example.json");
 const SITE = process.argv[2] || JSON.parse(readFileSync(brandFile, "utf8")).siteUrl;
+if (!process.argv[2] && !existsSync(join(userRoot, "brand.json"))) {
+  console.error("\n  usage: slides verify <url>   (or set siteUrl in brand.json)\n");
+  process.exit(1);
+}
+// A site that does not answer at all is a different failure from a gate that is wrong, and a
+// raw fetch stack trace said neither.
+try { await fetch(SITE, { method: "HEAD" }); } catch (err) {
+  console.error(`\n  could not reach ${SITE} (${err.cause?.code ?? err.message})\n`);
+  process.exit(1);
+}
 let failed = 0;
 
 const check = (name, ok, detail = "") => {

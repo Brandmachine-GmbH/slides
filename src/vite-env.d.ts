@@ -9,6 +9,7 @@ declare module "@deck" {
 // CSS side-effect imports resolved by aliases in vite.config.ts.
 declare module "@active-fonts";
 declare module "@export-css";
+declare module "@site-theme";
 
 // Build-time flag injected via vite.config.ts `define`. true only in PDF-export builds.
 declare const __EXPORT__: boolean;

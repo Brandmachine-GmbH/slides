@@ -12,16 +12,29 @@
 // Env vars (Netlify UI or `netlify env:set`):
 //   ADMIN_PASSWORD  the passphrase you type
 //   AUTH_SECRET     random string used to sign the session cookie
-import { BRAND } from "./lib/brand.js";
-import { HUB_HTML } from "./lib/hub.js";
-import { editorHtml } from "./lib/editor.js";
+//
+// SHIPPED IN THE PACKAGE, CALLED FROM THE SITE. A site's netlify/edge-functions/admin.ts is three
+// lines: it imports this, hands it the modules its own build generated, and declares `config`.
+// The logic lives here so that a fix to the gate reaches every site on its next install, rather
+// than every site keeping a copy nobody updates. `config` stays in the site's file because
+// Netlify reads it from the function file itself. Compiled to JavaScript when the package is
+// published (see package.json), because Deno will not run TypeScript from node_modules.
 
-// One shared password and no username, and the code saying so is public, so guessing is the
-// attack. 30 a minute per IP is far above anyone clicking around the hub and far below a script.
-export const config = {
-  path: ["/admin", "/admin/*"],
-  rateLimit: { windowLimit: 30, windowSize: 60, aggregateBy: ["ip", "domain"] },
-};
+/** What a site's build generates into netlify/edge-functions/lib/. */
+export interface Site {
+  BRAND: { name: string };
+  HUB_HTML: string;
+  editorHtml: (name: string) => string | null;
+}
+
+let BRAND: Site["BRAND"];
+let HUB_HTML: Site["HUB_HTML"];
+let editorHtml: Site["editorHtml"];
+
+export function adminHandler(site: Site): (req: Request) => Promise<Response> {
+  ({ BRAND, HUB_HTML, editorHtml } = site);
+  return handler;
+}
 
 const COOKIE = "bm_admin";
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 days, so it behaves like a bookmark
@@ -94,7 +107,7 @@ ${msg ? `<p class="e">${msg}</p>` : `<p class="h">Enter the passcode.</p>`}
 </form></body></html>`;
 }
 
-export default async function handler(req: Request): Promise<Response> {
+async function handler(req: Request): Promise<Response> {
   try {
     const secret = Deno.env.get("AUTH_SECRET");
     const password = Deno.env.get("ADMIN_PASSWORD");

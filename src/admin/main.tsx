@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { EditApp } from "./EditApp";
 import "@engine/tokens.css";       // the deck's own tokens: the thumbnails are real slides
+import "@site-theme";
 import "@active-fonts";
 import "./edit-chrome.css";
 

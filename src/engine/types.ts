@@ -438,7 +438,22 @@ export interface SlideViewer extends SlideMeta {
   download?: boolean;
 }
 
-export type SectionSlide = ContentItem | SlideDivider | SlidePlan | SlideShowcase | SlideViewer | SlideStack | SlideScene | SlideFilm | SlideMockup;
+/** The end slide (the brand mark on its own), placed where the deck wants it.
+ *
+ *  Without one the engine still appends it after the last section, exactly as it always has, so
+ *  no deck written before this existed changes. Placing it is for a deck that keeps material
+ *  AFTER the close: an appendix the presenter only opens when someone asks, which has to sit
+ *  behind the end slide so that walking the deck forward ends the meeting on the mark rather
+ *  than wandering into the backup slides. Place at most one; a deck that places one gets no
+ *  automatic one.
+ *
+ *  It is an authored slide like any other, so unlike the automatic one it can carry a `job`, a
+ *  `handout` and its own `number: false`. */
+export interface SlideEnd extends SlideMeta {
+  end: true;
+}
+
+export type SectionSlide = ContentItem | SlideDivider | SlidePlan | SlideShowcase | SlideViewer | SlideStack | SlideScene | SlideFilm | SlideMockup | SlideEnd;
 
 export interface Section {
   /** false hides the number on this section's DIVIDER slide, and nothing else. The section's
@@ -475,6 +490,14 @@ export interface Section {
    *  unrelated photographs reads as decoration, which is the failure this was added to avoid. */
   thumb?: string;
 
+  /** false leaves this section off the overview slide. Default true.
+   *
+   *  For an appendix: the overview is the room's promise of what the meeting covers, and a
+   *  chapter that is only opened on request should not be in it. The section still has its
+   *  divider, its place in the bottom nav and its row in the Contents panel, because those are
+   *  the presenter's ways of getting to it when the question does come up. */
+  agenda?: boolean;
+
   /** What this CHAPTER has to do: the job of its slides taken together. Internal, stripped from
    *  the client bundle exactly like SlideMeta.job.
    *
@@ -502,7 +525,8 @@ export interface Deck {
    *
    *  The per-slide `number: false` is for the one or two a deck wants quiet. This is for a deck
    *  that does not want them at all, which is otherwise an edit to every slide in it, and it is
-   *  also the only way to unnumber the outro, since nothing in deck.ts describes that slide. */
+   *  also the only way to unnumber the automatic outro, since nothing in deck.ts describes that
+   *  slide. A placed one (SlideEnd) takes `number: false` like any other. */
   numbers?: boolean;
 
   /** "editorial" switches this deck onto the second visual register: plain white ground with no
@@ -532,8 +556,9 @@ export interface Deck {
   /** What the MEETING has to do. One sentence, at the top of story mode, and the thing every
    *  slide's job is ultimately answerable to. Internal, stripped like the others.
    *
-   *  The outro is the one slide that cannot have a job, for the same reason it cannot have a
-   *  number of its own: there is nothing in deck.ts describing it to hang one on. */
+   *  The automatic outro is the one slide that cannot have a job, for the same reason it cannot
+   *  have a number of its own: there is nothing in deck.ts describing it to hang one on. Place it
+   *  as a SlideEnd and it can. */
   job?: string;
 }
 
@@ -568,6 +593,8 @@ export interface TocSection {
   tagline: string;
   /** Section.thumb, already prefixed with the deck's base. */
   thumb?: string;
+  /** Section.agenda: false keeps this row off the overview slide and nowhere else. */
+  agenda: boolean;
   dividerIndex: number;
   items: { label: string; index: number }[];
 }

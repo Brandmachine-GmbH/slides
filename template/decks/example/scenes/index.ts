@@ -7,7 +7,7 @@
 // touching the other.
 import { lazy } from "react";
 import type { ComponentType } from "react";
-import type { SceneProps } from "@engine/types";
+import type { SceneProps } from "@brandmachine/slides";
 
 const scenes: Record<string, ComponentType<SceneProps>> = {
   "chain": lazy(() => import("./Chain")),

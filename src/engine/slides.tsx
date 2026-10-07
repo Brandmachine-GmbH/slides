@@ -159,9 +159,12 @@ export function TitleSlide({ deck, images }: { deck: Deck; images?: string[] }) 
 }
 
 export function AgendaSlide({ deck, toc, onJump }: { deck: Deck; toc: TocSection[]; onJump: (index: number) => void }) {
+  // An appendix (Section.agenda: false) is reachable from the nav but not promised to the room,
+  // so it drops out here before the rows are numbered: 01 to 04 stay 01 to 04.
+  const rows = toc.filter((sec) => sec.agenda);
   // Pictures switch the overview to its second layout, but only when the deck has given them:
   // a deck without thumbs keeps the card rows it was written against.
-  const pictures = toc.some((sec) => sec.thumb);
+  const pictures = rows.some((sec) => sec.thumb);
   const head = (
     <>
       <p className={s.eyebrow} data-vt="label">{deck.agenda.eyebrow}</p>
@@ -173,7 +176,7 @@ export function AgendaSlide({ deck, toc, onJump }: { deck: Deck; toc: TocSection
       <div className={`${s.slide} ${s.agenda} ${s.agendaPictures}`}>
         <div className={s.agendaHead}>{head}</div>
         <div className={s.agendaGrid}>
-          {toc.map((sec, k) => (
+          {rows.map((sec, k) => (
             <button
               key={sec.dividerIndex}
               className={s.agendaPicRow}
@@ -192,7 +195,7 @@ export function AgendaSlide({ deck, toc, onJump }: { deck: Deck; toc: TocSection
     <div className={`${s.slide} ${s.agenda}`}>
       {head}
       <div className={s.agendaList}>
-        {toc.map((sec, k) => (
+        {rows.map((sec, k) => (
           <button
             key={sec.dividerIndex}
             className={s.agendaRow}

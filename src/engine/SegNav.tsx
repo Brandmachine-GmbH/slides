@@ -39,9 +39,16 @@ function buildSegments(toc: TocSection[], flatLength: number): Segment[] {
       ticks,
     });
   });
-  segs.push({ label: "Outro", firstIndex: flatLength - 1, ticks: [
-    { index: flatLength - 1, label: "Thank you" },
-  ] });
+  // Only the automatic outro needs a segment of its own. A placed end slide is an item of the
+  // section it sits in, so it already has a tick there, and the last slide of the deck is then
+  // the appendix's, which must not be relabelled "Thank you".
+  const lastIsOwned = toc.some((sec) =>
+    sec.dividerIndex === flatLength - 1 || sec.items.some((it) => it.index === flatLength - 1));
+  if (!lastIsOwned) {
+    segs.push({ label: "Outro", firstIndex: flatLength - 1, ticks: [
+      { index: flatLength - 1, label: "Thank you" },
+    ] });
+  }
   return segs;
 }
 

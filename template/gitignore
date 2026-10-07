@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+
+# PDF leave-behinds are build output (slides pdf <deck>)
+decks/*/*.pdf
+
+# Written by `slides build`. Between them they hold every deck in full, every slug and every
+# passcode, so they must never be committed; the edge function reads them at deploy time.
+netlify/edge-functions/lib/
+
+.netlify/
+.env
+deno.lock

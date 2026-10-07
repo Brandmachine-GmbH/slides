@@ -10,7 +10,7 @@
  * somebody has to remember to look at. `job` is the exception: it is data, so a Vite plugin
  * blanks it before bundling and check-leaks.mjs greps dist/ afterwards to prove it.
  */
-import type { Deck } from "@engine/types";
+import type { Deck } from "@brandmachine/slides";
 
 const deck: Deck = {
   // Any of these opens the deck; matching ignores case, spaces and punctuation. A real deck

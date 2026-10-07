@@ -5,6 +5,10 @@ import { SlideBody } from "@engine/SlideBody";
 import { applyDeckTheme } from "@engine/theme";
 import { walkCards, setPath, getPath } from "./fields";
 import { Story } from "./Story";
+import {
+  type Comment, fingerprint, loadComments, saveComments, watchComments, numberComments, describePoint, commentLines, clip,
+} from "./comments";
+import { DotLayer, Popover, type Draft } from "./Dots";
 import s from "./edit.module.css";
 
 // The per-deck editor at /admin/edit/<deck>.
@@ -19,6 +23,19 @@ import s from "./edit.module.css";
 // diff's whole job is to say what changed and nothing else. See PAYLOAD below.
 
 interface Boot { name: string; slug: string; sha: string; deck: Deck }
+
+// The rows view's slide size. Per browser rather than per deck: it follows the screen and the
+// task (S for retyping copy, L for judging a layout), not the deck. Stored the same guarded way
+// as comments, since a preference is never worth an editor that will not load.
+type Size = "s" | "m" | "l";
+const SIZES: Size[] = ["s", "m", "l"];
+const SIZE_KEY = "bmx-rows-size";
+function loadSize(): Size {
+  try {
+    const v = localStorage.getItem(SIZE_KEY);
+    return SIZES.includes(v as Size) ? (v as Size) : "s";
+  } catch { return "s"; }
+}
 
 const DOT = " · ";
 
@@ -51,7 +68,7 @@ function Lazy({ children, className }: { children: React.ReactNode; className: s
  *  about the one thing it exists to show. A transform leaves the layout at 1280x720 and scales the
  *  drawing, so the wrap is the real one. Same reasoning as TRANSFORM_BELOW in SlideShow.tsx, which is
  *  why that one is 1: no reduction is small enough to be safe. */
-function Thumb({ children }: { children: React.ReactNode }) {
+function Thumb({ children, layer }: { children: React.ReactNode; layer?: React.ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0.235);
   useEffect(() => {
@@ -63,7 +80,8 @@ function Thumb({ children }: { children: React.ReactNode }) {
   }, []);
   return (
     <div className={s.thumb} ref={box}>
-      <div className={s.stage} style={{ transform: `scale(${k})` }}>{children}</div>
+      <div className={s.stage} data-stage style={{ transform: `scale(${k})` }}>{children}</div>
+      {layer}
     </div>
   );
 }
@@ -79,6 +97,23 @@ export function EditApp({ boot }: { boot: Boot }) {
   const [cut, setCut] = useState<Set<number>>(new Set());
   const [view, setView] = useState<"sheet" | "rows" | "story">("sheet");
   const [shown, setShown] = useState(false);
+  const [size, setSize] = useState<Size>(loadSize);
+  useEffect(() => {
+    try { localStorage.setItem(SIZE_KEY, size); } catch { /* see loadSize */ }
+  }, [size]);
+
+  // The rows view pins each thumbnail under the header, and the header's height is not fixed:
+  // it wraps on a narrow window and grows a line in comment mode. A hard-coded offset would park
+  // the thumbnail underneath it in exactly those cases, so it is measured.
+  const head = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = head.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() =>
+      document.documentElement.style.setProperty("--bmx-head", `${el.offsetHeight}px`));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // Undo covers structural moves — a whole drag, a cut, a restore — not keystrokes. One entry
   // per gesture, taken before it starts, so undo reverses "what I just did" rather than
@@ -141,6 +176,66 @@ export function EditApp({ boot }: { boot: Boot }) {
       .filter((e) => e.to !== e.from);
   }, [jobPaths, original, deck, originalCards]);
 
+  // COMMENTS. Persisted, unlike everything above, and outside undo: undo is for structural moves,
+  // and a review pass is the one thing on this page too expensive to lose to a reload.
+  const print = useMemo(() => fingerprint(boot.deck), [boot.deck]);
+  const [comments, setComments] = useState<Comment[]>(() => loadComments(boot.name));
+  useEffect(() => saveComments(boot.name, comments), [boot.name, comments]);
+  useEffect(() => watchComments(boot.name, setComments), [boot.name]);
+  const numbers = useMemo(() => numberComments(comments), [comments]);
+  const stale = comments.filter((c) => c.print !== print).length;
+  const [commenting, setCommenting] = useState(false);
+  const [draft, setDraft] = useState<Draft | null>(null);
+
+  const saveDraft = useCallback((d: Draft) => {
+    const c = { ...d.comment, text: d.comment.text.trim() };
+    if (c.text) setComments((cs) => (d.isNew ? [...cs, c] : cs.map((x) => (x.id === c.id ? c : x))));
+    setDraft(null);
+  }, []);
+
+  // A click anywhere else keeps what was typed rather than throwing it away, so moving on to the
+  // next dot is one click and not Save-then-click. Only an empty draft is dropped.
+  useEffect(() => {
+    if (!draft) return;
+    const away = (e: PointerEvent) => {
+      if ((e.target as Element | null)?.closest?.("[data-popover]")) return;
+      saveDraft(draft);
+    };
+    document.addEventListener("pointerdown", away, true);
+    return () => document.removeEventListener("pointerdown", away, true);
+  }, [draft, saveDraft]);
+
+  // The story view has no thumbnails, so there is nothing to point a dot at or anchor one to.
+  useEffect(() => { if (view === "story") { setCommenting(false); setDraft(null); } }, [view]);
+
+  // `m` for mark. The slideshow already owns c, d and f (Contents, dark, fullscreen) and this page
+  // shares a reviewer's fingers with it, so the editor takes a letter the deck does not use.
+  // Typing in any field is left alone, and so are modifiers, so Cmd+M still minimises.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (/^(input|textarea|select)$/i.test(t.tagName) || t.isContentEditable)) return;
+      if (e.metaKey || e.ctrlKey || e.altKey || shown || view === "story") return;
+      if (e.key.toLowerCase() === "m") { e.preventDefault(); setCommenting((c) => !c); }
+      // `s` for size, rows view only: it is the only view with a size to change, and a key that
+      // silently does nothing in the other two is better than one that changes something unseen.
+      else if (e.key.toLowerCase() === "s" && view === "rows") {
+        e.preventDefault();
+        setSize((z) => SIZES[(SIZES.indexOf(z) + 1) % SIZES.length]);
+      }
+      else if (e.key === "Escape" && commenting && !draft) setCommenting(false);
+    };
+    addEventListener("keydown", onKey);
+    return () => removeEventListener("keydown", onKey);
+  }, [shown, view, commenting, draft]);
+
+  const clearComments = () => {
+    if (confirm(`Delete all ${comments.length} comment${comments.length === 1 ? "" : "s"} on ${boot.name}? This cannot be undone.`)) {
+      setDraft(null);
+      setComments([]);
+    }
+  };
+
   const edit = useCallback((path: string, value: string) => {
     setDeck((d) => setPath(d, path, value));
   }, []);
@@ -190,11 +285,14 @@ export function EditApp({ boot }: { boot: Boot }) {
       });
       L.push("");
     }
-    L.push(moved || cuts.length || edits.length || jobEdits.length
+    // Last, because the blocks above are exact and this one is not: applying the exact changes
+    // first means a comment is read against the deck as it is about to be, not as it was.
+    L.push(...commentLines(comments, print));
+    L.push(moved || cuts.length || edits.length || jobEdits.length || comments.length
       ? "Apply exactly what is listed above and nothing else. Anything absent is unchanged."
       : "(nothing changed)");
     return L.join("\n");
-  }, [boot.name, boot.sha, moved, order, cut, edits, jobEdits, originalCards]);
+  }, [boot.name, boot.sha, moved, order, cut, edits, jobEdits, originalCards, comments, print]);
 
   const drag = useRef<number | null>(null);
   const [dragPos, setDragPos] = useState<number | null>(null);
@@ -214,24 +312,67 @@ export function EditApp({ boot }: { boot: Boot }) {
 
   return (
     <>
-      <header className={s.head}>
+      <header className={s.head} ref={head}>
         <h1 className={s.deckName}>{boot.name}</h1>
         <span className={s.meta}>
           {cards.length} slides{DOT}base {boot.sha}{DOT}{cut.size} cut{DOT}{edits.length} edits
           {moved ? `${DOT}reordered` : ""}{jobEdits.length ? `${DOT}${jobEdits.length} story` : ""}
+          {comments.length ? `${DOT}${comments.length} ${comments.length === 1 ? "comment" : "comments"}` : ""}
         </span>
         <span className={s.spacer} />
+        <button
+          className={commenting ? s.on : ""}
+          aria-pressed={commenting}
+          disabled={view === "story"}
+          title="Click a slide to pin a comment to that spot (M)"
+          onClick={() => setCommenting((c) => !c)}
+        >Comment <span className={s.kbd}>M</span></button>
         <button onClick={undo} disabled={!history.length}>Undo</button>
         <a className={s.back} href="/admin">All decks</a>
         <button className={view === "sheet" ? s.on : ""} onClick={() => setView("sheet")}>Contact sheet</button>
         <button className={view === "rows" ? s.on : ""} onClick={() => setView("rows")}>Rows</button>
         <button className={view === "story" ? s.on : ""} onClick={() => setView("story")}>Story</button>
         <button className={s.go} onClick={() => setShown(true)}>Copy for Claude</button>
+        {commenting && (
+          <div className={s.hint}>
+            Comment mode. Click anywhere on a slide to pin a numbered comment there; click a dot to
+            edit it. Dragging is off until you leave with M or Esc.
+          </div>
+        )}
       </header>
+
+      {stale > 0 && (
+        <div className={s.stale}>
+          <span>
+            <b>{stale} {stale === 1 ? "comment was" : "comments were"} placed on an earlier build of this deck.</b>{" "}
+            A slide may have moved under its dot. Each one still quotes what it pointed at, and the
+            paste marks it, so check it or clear them once they are applied.
+          </span>
+          <button onClick={clearComments}>Clear comments</button>
+        </div>
+      )}
 
       {view === "story" ? <Story deck={deck} cards={cards} edit={edit} /> : (
       <div className={s.wrap}>
-        <div className={view === "sheet" ? s.sheet : s.rows}>
+        {/* Here rather than in the header, which is already one button from wrapping at 1440px,
+            and because it only means anything in this view. */}
+        {view === "rows" && (
+          <div className={s.sizeBar}>
+            <span>Slide size</span>
+            <div className={s.seg} role="group" aria-label="Slide size">
+              {SIZES.map((z) => (
+                <button
+                  key={z}
+                  className={size === z ? s.on : ""}
+                  aria-pressed={size === z}
+                  title={`${{ s: "Small", m: "Medium", l: "Large" }[z]} slides (S cycles)`}
+                  onClick={() => setSize(z)}
+                >{z.toUpperCase()}</button>
+              ))}
+            </div>
+          </div>
+        )}
+        <div className={view === "sheet" ? s.sheet : s.rows} data-size={size}>
           {order.map((o, pos) => {
             const card = cards[o];
             const isCut = cut.has(o);
@@ -239,7 +380,7 @@ export function EditApp({ boot }: { boot: Boot }) {
               <div
                 key={o}
                 className={`${s.card}${isCut ? ` ${s.isCut}` : ""}${card.fixed ? ` ${s.fixed}` : ""}${view === "rows" ? ` ${s.row}` : ""}${pos === dragPos ? ` ${s.dragging}` : ""}`}
-                draggable={!card.fixed}
+                draggable={!card.fixed && !commenting}
                 onDragStart={() => { snapshot(); drag.current = pos; setDragPos(pos); }}
                 onDragOver={(e) => {
                   e.preventDefault();
@@ -252,8 +393,41 @@ export function EditApp({ boot }: { boot: Boot }) {
                 onDragEnd={() => { drag.current = null; setDragPos(null); }}
                 onDrop={(e) => { e.preventDefault(); drag.current = null; setDragPos(null); }}
               >
+                {/* One box for the thumbnail and its footer, so the rows view can pin them as a
+                    unit; as two grid items they would stick separately and the footer would
+                    scroll away from its slide. */}
+                <div className={s.side}>
                 <Lazy className={s.thumbHost}>
-                  <Thumb><SlideBody slide={flat[o]} deck={deck} toc={toc} /></Thumb>
+                  <Thumb layer={
+                    <DotLayer
+                      comments={comments.filter((c) => c.origin === o + 1)}
+                      numbers={numbers}
+                      draft={draft?.comment.origin === o + 1 ? draft : null}
+                      placing={commenting}
+                      stalePrint={print}
+                      onOpen={(c) => setDraft({ comment: { ...c }, isNew: false })}
+                      onPlace={(e, stage) => {
+                        const r = e.currentTarget.getBoundingClientRect();
+                        const pct = (v: number) => Math.round(Math.min(100, Math.max(0, v * 100)) * 10) / 10;
+                        setDraft({
+                          isNew: true,
+                          comment: {
+                            id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+                            at: Date.now(),
+                            origin: o + 1,
+                            slide: card.path,
+                            says: clip(card.says),
+                            x: pct((e.clientX - r.left) / r.width),
+                            y: pct((e.clientY - r.top) / r.height),
+                            ...describePoint(stage, e.clientX, e.clientY, card, deck, base),
+                            text: "",
+                            base: boot.sha,
+                            print,
+                          },
+                        });
+                      }}
+                    />
+                  }><SlideBody slide={flat[o]} deck={deck} toc={toc} /></Thumb>
                 </Lazy>
                 <div className={s.bar}>
                   <span className={s.grip} aria-hidden="true">&#x283f;</span>
@@ -272,6 +446,7 @@ export function EditApp({ boot }: { boot: Boot }) {
                       });
                     }}>{isCut ? "Restore" : "Cut"}</button>
                   )}
+                </div>
                 </div>
                 {view === "rows" && (
                   card.fields.length ? (
@@ -299,12 +474,31 @@ export function EditApp({ boot }: { boot: Boot }) {
       </div>
       )}
 
+      {draft && (
+        <Popover
+          draft={draft}
+          number={numbers.get(draft.comment.id)
+            ?? comments.filter((c) => c.origin === draft.comment.origin).length + 1}
+          stale={draft.comment.print !== print}
+          onText={(text) => setDraft((d) => (d ? { ...d, comment: { ...d.comment, text } } : d))}
+          onSave={() => saveDraft(draft)}
+          onCancel={() => setDraft(null)}
+          onDelete={() => {
+            setComments((cs) => cs.filter((c) => c.id !== draft.comment.id));
+            setDraft(null);
+          }}
+        />
+      )}
+
       {shown && (
         <div className={s.scrim} onClick={() => setShown(false)}>
           <div className={s.dialog} onClick={(e) => e.stopPropagation()}>
             <div className={s.dialogHead}>
               <b>Paste this into Claude Code</b>
               <span className={s.spacer} />
+              {/* Here rather than in the header: the moment after copying is when comments become
+                  done, and the header was already one button from wrapping. */}
+              {comments.length > 0 && <button onClick={clearComments}>Clear comments</button>}
               <button className={s.go} onClick={() => navigator.clipboard.writeText(payload)}>Copy</button>
               <button onClick={() => setShown(false)}>Close</button>
             </div>

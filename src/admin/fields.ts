@@ -24,6 +24,11 @@ export interface Card {
    *  them, so they can be retyped but not dragged. */
   fixed: boolean;
   fields: Field[];
+  /** Where the slide itself lives in deck.ts ("sections[1].slides[2]", "title", "agenda",
+   *  "sections[1]" for a divider). The outro has none, since nothing in deck.ts describes it, and
+   *  carries "outro" so a comment placed on it still names something. Comments use this to say
+   *  which slide they are on in the same vocabulary EDIT lines use for fields. */
+  path: string;
 
   /* Below here is story mode's half of a card. It rides on walkCards rather than getting its own
      walk, because the one thing that must never happen is two views numbering the same deck
@@ -122,7 +127,7 @@ function textFields(slide: Record<string, unknown>, base: string): Field[] {
 export function walkCards(deck: Deck): Card[] {
   const cards: Card[] = [];
   cards.push({
-    origin: 0, kind: "title", label: "Title", fixed: true,
+    origin: 0, kind: "title", label: "Title", fixed: true, path: "title",
     says: plain(deck.title.headingHtml), jobPath: "title.job",
     fields: [
       { path: "title.eyebrow", label: "Label", value: deck.title.eyebrow },
@@ -132,7 +137,7 @@ export function walkCards(deck: Deck): Card[] {
   });
   if (deck.sections.length > 1) {
     cards.push({
-      origin: 0, kind: "overview", label: "Overview", fixed: true,
+      origin: 0, kind: "overview", label: "Overview", fixed: true, path: "agenda",
       says: deck.agenda.heading, jobPath: "agenda.job",
       fields: [
         { path: "agenda.eyebrow", label: "Label", value: deck.agenda.eyebrow },
@@ -144,6 +149,7 @@ export function walkCards(deck: Deck): Card[] {
     if (sec.divider !== false) {
       cards.push({
         origin: 0, kind: "divider", label: `Section: ${sec.short ?? sec.title}`, fixed: true,
+        path: `sections[${n}]`,
         sec: n, isDivider: true, says: sec.title,
         fields: [
           { path: `sections[${n}].title`, label: "Section title", value: sec.title, multiline: true },
@@ -154,11 +160,12 @@ export function walkCards(deck: Deck): Card[] {
     }
     sec.slides.forEach((sl, m) => {
       const s = sl as unknown as Record<string, unknown>;
-      const kind = ["divider", "plan", "viewer", "mockup", "stack", "scene", "film", "showcase"].find((k) => k in s) ?? "content";
+      const kind = ["end", "divider", "plan", "viewer", "mockup", "stack", "scene", "film", "showcase"].find((k) => k in s) ?? "content";
       cards.push({
         origin: 0, kind,
-        label: (s.title ?? s.headline ?? s.eyebrow ?? s.group ?? "(untitled)") as string,
+        label: (s.title ?? s.headline ?? s.eyebrow ?? s.group ?? (kind === "end" ? "End slide" : "(untitled)")) as string,
         fixed: false,
+        path: `sections[${n}].slides[${m}]`,
         sec: n,
         jobPath: `sections[${n}].slides[${m}].job`,
         // A film carries no type at all and a mockup's heading is the software's, so both would
@@ -168,7 +175,10 @@ export function walkCards(deck: Deck): Card[] {
       });
     });
   });
-  cards.push({ origin: 0, kind: "outro", label: "Outro", fixed: true, says: "", fields: [] });
+  // Mirrors buildSlides: the automatic outro only exists when no section placed an end slide.
+  if (!deck.sections.some((sec) => sec.slides.some((sl) => "end" in sl))) {
+    cards.push({ origin: 0, kind: "outro", label: "Outro", fixed: true, path: "outro", says: "", fields: [] });
+  }
   cards.forEach((c, i) => { c.origin = i + 1; });
   return cards;
 }

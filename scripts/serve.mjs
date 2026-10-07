@@ -20,12 +20,13 @@ import { createReadStream, existsSync, statSync } from "node:fs";
 import { dirname, join, normalize, extname, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+// The SITE's folder: its dist/ and the edge-function modules its build wrote. See vite.config.ts.
+const root = process.env.SLIDES_ROOT || process.cwd();
 const dist = join(root, "dist");
 const port = Number(process.env.PORT) || 8888;
 
 if (!existsSync(join(dist, "index.html"))) {
-  console.error("\n  dist/ is empty or missing. Run `make build` first (or use `make serve`,\n"
+  console.error("\n  dist/ is empty or missing. Run `slides build` first (or `slides serve --build`,\n"
     + "  which builds and then serves).\n");
   process.exit(1);
 }
@@ -108,7 +109,7 @@ function handle(req, res) {
 server.on("error", (err) => {
   if (err.code === "EADDRINUSE") {
     console.error(`\n  Port ${port} is already in use. Either stop what is on it, or:\n`
-      + `      PORT=8899 make serve\n`);
+      + `      PORT=8899 slides serve\n`);
     process.exit(1);
   }
   throw err;
@@ -123,6 +124,6 @@ server.listen(port, "127.0.0.1", () => {
   console.log(`    ${pad(`/admin/edit/${example}`)} straight into one deck's editor`);
   console.log(`\n  No password locally, and nothing outside this machine can reach it.`);
   console.log(`  This serves dist/ as built, so re-run after changing a deck.`);
-  console.log(`  For writing slides with hot reload, use \`make dev <deck>\` instead.`);
+  console.log(`  For writing slides with hot reload, use \`slides dev <deck>\` instead.`);
   console.log(`\n  Ctrl-C to stop.\n`);
 });

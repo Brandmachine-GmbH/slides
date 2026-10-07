@@ -1,4 +1,4 @@
-# Two gates, and the first one matters more than the second.
+# Three gates, and the first one matters most.
 #
 # check-public asserts that nothing private has landed here: no UUID outside the example deck's
 # own slug, no internal.json, no generated edge-function module, nothing oversized. It runs with
@@ -8,6 +8,9 @@
 #
 # Then a real build, which is the only way to know the engine still works with no brand, no
 # mockups and one example deck: the configuration that every other check is blind to.
+#
+# Then the package itself, installed from its own tarball into an empty folder (see
+# scripts/check-package.mjs), which is the only place the ways a package breaks can show.
 name: check
 
 on:
@@ -32,3 +35,6 @@ jobs:
       - run: node scripts/check-public.mjs .
       - run: npx tsc --noEmit
       - run: make build
+      # The package as a stranger gets it: packed, installed into an empty folder, init, new,
+      # build, typecheck. The failures a package has only show up once it is installed.
+      - run: npm run check

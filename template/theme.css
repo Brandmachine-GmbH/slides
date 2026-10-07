@@ -1,0 +1,12 @@
+/* Your site's own look, loaded after the engine's tokens, so anything here overrides them.
+ *
+ * Every token the engine reads is in node_modules/@brandmachine/slides/src/engine/tokens.css.
+ * Override the ones you need and leave the rest. Sizes must name a step of the type scale
+ * (var(--type-*)): `slides build` fails on a raw font-size here, as it does in the engine.
+ *
+ * Your own fonts: put the files in fonts/ and declare them here with @font-face, then point the
+ * font tokens at them.
+ */
+:root {
+  /* --orange: #ff5500; */
+}

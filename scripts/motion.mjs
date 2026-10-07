@@ -50,9 +50,10 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "playwright-core";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const userRoot = process.env.SLIDES_ROOT || process.cwd();
 const deckName = process.argv[2];
 if (!deckName) {
-  console.error("usage: node scripts/motion.mjs <deck>   (or: make motion <deck>)");
+  console.error("usage: node scripts/motion.mjs <deck>   (or: slides motion <deck>)");
   process.exit(1);
 }
 
@@ -64,9 +65,9 @@ const SNAP_PX = 2;
 // "it feels rough" actually is.
 const DROP_MAX = 3;
 
-const libDir = join(root, "netlify", "edge-functions", "lib");
+const libDir = join(userRoot, "netlify", "edge-functions", "lib");
 if (!existsSync(join(libDir, "editor.js"))) {
-  console.error("\n  dist/ and the edge functions are missing. Run `make build` first.\n");
+  console.error("\n  dist/ and the edge functions are missing. Run `slides build` first.\n");
   process.exit(1);
 }
 const { editorHtml } = await import(pathToFileURL(join(libDir, "editor.js")).href);
@@ -86,7 +87,7 @@ for (const sec of d.sections) total += (sec.divider !== false ? 1 : 0) + sec.sli
 
 const port = Number(process.env.PORT) || 8912;
 const srv = spawn(process.execPath, [join(root, "scripts", "serve.mjs")],
-  { cwd: root, env: { ...process.env, PORT: String(port) } });
+  { cwd: root, env: { ...process.env, SLIDES_ROOT: userRoot, PORT: String(port) } });
 const up = await new Promise((res) => {
   const t = setInterval(async () => {
     try { await fetch(`http://localhost:${port}/admin`); clearInterval(t); res(true); } catch {}

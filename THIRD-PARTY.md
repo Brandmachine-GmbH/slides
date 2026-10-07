@@ -53,7 +53,6 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ## npm dependencies
 
-All permissive: React and ReactDOM, Vite, `@vitejs/plugin-react`, `esbuild`, `exifr` and
-`framer-motion` (MIT), `lucide-react` (ISC), `typescript` and `playwright-core` (Apache-2.0).
-`framer-motion` and `lucide-react` are only loaded by driven product embeds under `mockups/`,
-which this repo does not include.
+All permissive: React and ReactDOM (peer dependencies, installed by the site), Vite,
+`@vitejs/plugin-react`, `esbuild`, `exifr` and the React type definitions (MIT), `typescript` and
+`playwright-core` (Apache-2.0).

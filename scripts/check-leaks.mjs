@@ -45,19 +45,21 @@ const RAW_METADATA_MARKERS = [
 // is a denylist that gets read by anyone the script is shown to. Missing file means no extra
 // terms, which is the right default for a checkout that has none.
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+// The site being checked, which owns brand.json and leaks.json. See vite.config.ts.
+const USER = process.env.SLIDES_ROOT || process.cwd();
 
 // The site's own name and product names. Both are exemptions this check needs and neither is a
 // property of the engine, so they come from brand.json rather than from literals in here. A fork
 // with different products gets its own exemptions by editing one file.
 const BRAND = JSON.parse(readFileSync(
-  existsSync(join(ROOT, "brand.json"))
-    ? join(ROOT, "brand.json")
+  existsSync(join(USER, "brand.json"))
+    ? join(USER, "brand.json")
     : join(ROOT, "src", "engine", "brand.example.json"), "utf8"));
 const OUR_NAME = (BRAND.name ?? "").toLowerCase().replace(/[^a-z]/g, "");
 const OUR_PRODUCTS = (BRAND.products ?? []).map((p) => p.toLowerCase());
 
 const FORBIDDEN = (() => {
-  const f = join(ROOT, "leaks.json");
+  const f = join(USER, "leaks.json");
   if (!existsSync(f)) return [];
   return JSON.parse(readFileSync(f, "utf8")).forbidden ?? [];
 })();
@@ -83,8 +85,8 @@ function engineSource(decksDir) {
   // internal.json notes about decks that demo them. Leaving it out turns a product name into a
   // two-capitalised-word "contact name" and fails the build on the deck it belongs to. It is a
   // list rather than a path so that moving a source tree again cannot silently narrow it.
-  for (const dir of ["src", "mockups"]) {
-    const full = join(root, dir);
+  // The engine's source is the package's; mockups/ is the site's.
+  for (const full of [join(ROOT, "src"), join(root, "mockups")]) {
     if (existsSync(full)) walkSrc(full);
   }
   srcCache = parts.join("\n");
@@ -149,8 +151,16 @@ function sidecarStrings(decksDir) {
         // will NOT be caught, since the name is then part of that deck's own public copy. What
         // is caught is that name reaching any OTHER deck, and any name that was never authored
         // onto a slide at all.
-        if (publik.includes(m[0])) continue;
-        out.push({ from: `${name}/internal.json (name)`, text: m[0] });
+        //
+        // Every tail of the run as well as the run itself: "For Jane Doe." matches as
+        // "For Jane Doe", a string that appears nowhere, so the name inside it was never
+        // looked for. That is the shape the docs use for a note, which is how it was found.
+        const words = m[0].split(/\s+/);
+        for (let i = 0; i <= words.length - 2; i++) {
+          const text = words.slice(i).join(" ");
+          if (publik.includes(text)) continue;
+          out.push({ from: `${name}/internal.json (name)`, text });
+        }
       }
     }
   }

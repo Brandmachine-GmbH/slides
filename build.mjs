@@ -3,20 +3,31 @@
 // Each deck is served at <the site's domain>/<slug>/; see brand.json.
 // Run:  node build.mjs   (or: npm run build)
 import { execSync, execFile } from "node:child_process";
-import { readdirSync, readFileSync, writeFileSync, rmSync, mkdirSync, existsSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync, rmSync, mkdirSync, existsSync, realpathSync } from "node:fs";
 import { cp } from "node:fs/promises";
 import { cpus } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { createRequire } from "node:module";
 import { build as esbuild } from "esbuild";
 import { checkLeaks } from "./scripts/check-leaks.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url));
-const decksDir = join(root, "decks");
-const dist = join(root, "dist");
+// Two roots: `root` is this package, `userRoot` the site being built (decks/, brand.json, the
+// output). See the same note in vite.config.ts.
+// Real path, because Vite reports module ids by their real path: through a symlink, stripJobs'
+// prefix test against decks/ missed every deck and only check-leaks stopped the jobs shipping.
+const userRoot = realpathSync(process.env.SLIDES_ROOT || process.cwd());
+const decksDir = join(userRoot, "decks");
+const dist = join(userRoot, "dist");
 
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(dist, { recursive: true });
+
+if (!existsSync(decksDir)) {
+  console.error(`✗ No decks/ folder in ${userRoot}. Run \`npx slides init\` here, or cd into the site.`);
+  process.exit(1);
+}
 
 const names = readdirSync(decksDir, { withFileTypes: true })
   .filter((d) => d.isDirectory())
@@ -32,16 +43,21 @@ const names = readdirSync(decksDir, { withFileTypes: true })
 // across twelve builds was 2.6s of a 15.7s build. Calling the entry directly with this Node skips
 // all of it and removes a dependency on how PATH happens to be set.
 //
+// Eight at most: measured on a 10-performance-core Mac (7 Oct 2026), more than eight builds at
+// once compete for the machine and the whole build gets slower again, not faster.
+//
 // JOBS=1 restores the old one-at-a-time behaviour, which is what you want when a build fails and
 // you would rather read the output in order than find it.
-const JOBS = Math.max(1, Number(process.env.JOBS) || Math.min(4, cpus().length - 1));
-const VITE = join(root, "node_modules", "vite", "bin", "vite.js");
+const JOBS = Math.max(1, Number(process.env.JOBS) || Math.min(8, cpus().length - 1));
+// Resolved rather than joined onto node_modules/: installed as a dependency, vite is usually
+// hoisted into the SITE's node_modules, not this package's.
+const VITE = join(dirname(createRequire(import.meta.url).resolve("vite/package.json")), "bin", "vite.js");
 
 function viteBuild(env) {
   return new Promise((resolve, reject) => {
     execFile(
       process.execPath, [VITE, "build"],
-      { cwd: root, env: { ...process.env, ...env }, maxBuffer: 64e6 },
+      { cwd: root, env: { ...process.env, SLIDES_ROOT: userRoot, ...env }, maxBuffer: 64e6 },
       (err, stdout, stderr) => {
         const out = `${stdout}${stderr}`;
         err ? reject(Object.assign(err, { out })) : resolve(out);
@@ -219,15 +235,19 @@ async function deckFull(name) {
 // the three pages the BUILD writes (the neutral root page, the hub, the edge function's login
 // screen) carry the same name as the pages Vite writes.
 const brand = JSON.parse(readFileSync(
-  existsSync(join(root, "brand.json"))
-    ? join(root, "brand.json")
+  existsSync(join(userRoot, "brand.json"))
+    ? join(userRoot, "brand.json")
     : join(root, "src", "engine", "brand.example.json"), "utf8"));
 
 // lib/ holds three generated modules and is created here rather than assumed. A checkout that
 // has never built has no reason to contain it: the files in it are output, and a fresh clone of
 // a repo that gitignores them starts without the folder at all.
-const edgeLib = join(root, "netlify", "edge-functions", "lib");
+const edgeLib = join(userRoot, "netlify", "edge-functions", "lib");
 mkdirSync(edgeLib, { recursive: true });
+// The modules below are ES modules, and Node decides how to load a .js file from the nearest
+// package.json. npm 11's `npm init -y` writes "type": "commonjs" into a site's, which made
+// `slides serve` (it imports these) die on the first `export`. This pins the folder to ESM.
+writeFileSync(join(edgeLib, "package.json"), '{ "type": "module" }\n');
 
 // The edge function runs on Deno at request time and cannot read brand.json, so the build hands
 // it the same values as a module, next to the hub and editor modules it already imports.
@@ -292,7 +312,7 @@ const hubDir = join(root, "hub");
   // otherwise clean build log, for a value we already have a fallback for.
   const sha = (process.env.COMMIT_REF || (() => {
     try {
-      return execSync("git rev-parse --short HEAD", { cwd: root, stdio: ["ignore", "pipe", "ignore"] })
+      return execSync("git rev-parse --short HEAD", { cwd: userRoot, stdio: ["ignore", "pipe", "ignore"] })
         .toString().trim();
     } catch { return "unknown"; }
   })()).slice(0, 7);
@@ -361,6 +381,8 @@ p{font-weight:700;font-size:20px;letter-spacing:-0.6px;color:#181b1b;font-featur
 // editor has its own chrome tokens and is not a slide.
 function checkTypeScale() {
   const dirs = [join(root, "src", "engine")];
+  // A site's theme overrides tokens, so it is exactly where a raw size would sneak in.
+  const theme = join(userRoot, "theme.css");
   // Deck-local scenes moved OUT of src/engine, and their stylesheets are exactly the ones most
   // likely to invent a size, because they are written for one slide. Scoping this check to the
   // engine would have quietly exempted them the day they moved.
@@ -368,9 +390,9 @@ function checkTypeScale() {
     const sc = join(decksDir, d.name, "scenes");
     if (existsSync(sc)) dirs.push(sc);
   }
-  const files = dirs.flatMap((dir) => readdirSync(dir, { recursive: true, withFileTypes: true })
+  const files = [...(existsSync(theme) ? [theme] : []), ...dirs.flatMap((dir) => readdirSync(dir, { recursive: true, withFileTypes: true })
     .filter((f) => f.isFile() && f.name.endsWith(".css"))
-    .map((f) => join(f.parentPath ?? f.path, f.name)));
+    .map((f) => join(f.parentPath ?? f.path, f.name)))];
   const bad = [];
   for (const f of files) {
     readFileSync(f, "utf8").split("\n").forEach((line, i) => {
@@ -380,7 +402,7 @@ function checkTypeScale() {
       const m = line.match(/font-size:\s*([^;}]+)/);
       const value = m?.[1].trim();
       if (value && !value.startsWith("var(--type-") && value !== "inherit") {
-        bad.push(`${f.slice(root.length + 1)}:${i + 1}  font-size: ${value}`);
+        bad.push(`${relative(userRoot, f)}:${i + 1}  font-size: ${value}`);
       }
     });
   }
@@ -424,7 +446,7 @@ const HANDOUT_MAX = 320;
   // `mockup` in types.ts is a plain string so that adding one is dropping in a file and adding
   // a line, and this check is what the union it replaced used to buy.
   const knownMockups = (() => {
-    const f = join(root, "mockups", "index.ts");
+    const f = join(userRoot, "mockups", "index.ts");
     if (!existsSync(f)) return [];
     return [...readFileSync(f, "utf8").matchAll(/^\s*"([a-z0-9-]+)"\s*:/gm)].map((m) => m[1]);
   })();

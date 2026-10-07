@@ -1,0 +1,10 @@
+{
+  "name": "Example",
+  "siteUrl": "http://localhost:8888",
+  "gate": {
+    "eyebrow": "Example",
+    "headingHtml": "Good to have<br/>you here.",
+    "hint": "Enter the passcode you were given."
+  },
+  "products": []
+}

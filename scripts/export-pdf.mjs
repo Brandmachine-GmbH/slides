@@ -12,13 +12,14 @@ import { fileURLToPath } from "node:url";
 import { existsSync } from "node:fs";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
+const userRoot = process.env.SLIDES_ROOT || process.cwd();
 const deckName = process.argv[2];
 
 if (!deckName) {
   console.error("usage: node scripts/export-pdf.mjs <deck>");
   process.exit(1);
 }
-if (!existsSync(join(root, "decks", deckName, "deck.ts"))) {
+if (!existsSync(join(userRoot, "decks", deckName, "deck.ts"))) {
   console.error(`no such deck: decks/${deckName}/deck.ts`);
   process.exit(1);
 }
@@ -33,7 +34,7 @@ process.env.VITE_EXPORT = "1";
 const noNotes = process.env.NOTES === "off";
 process.env.VITE_EXPORT_NO_NOTES = noNotes ? "1" : "";
 
-const server = await createServer({ root, server: { port: 0 } });
+const server = await createServer({ root, configFile: join(root, "vite.config.ts"), server: { port: 0 } });
 await server.listen();
 const url = server.resolvedUrls.local[0];
 
@@ -147,7 +148,7 @@ try {
   }, { retina: RETINA, quality: JPEG_QUALITY, maxPx: MAX_PX });
   console.log(`images: ${stats.downscaled}/${stats.total} downscaled`, stats.skipped.length ? "| skipped: " + JSON.stringify(stats.skipped) : "");
 
-  const out = join(root, "decks", deckName, `${deckName}${noNotes ? "-no-notes" : ""}.pdf`);
+  const out = join(userRoot, "decks", deckName, `${deckName}${noNotes ? "-no-notes" : ""}.pdf`);
   await page.pdf({
     path: out,
     preferCSSPageSize: true, // take the 960pt x 540pt page box from the @page rule

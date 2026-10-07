@@ -46,6 +46,13 @@ export function buildSlides(deck: Deck, baseUrl?: string): { flat: FlatSlide[]; 
     }
     const items: { label: string; index: number }[] = [];
     sec.slides.forEach((c) => {
+      // First, because it is the one kind that renders a slide the engine also makes on its own:
+      // the placed end slide IS the outro, at the deck's position instead of the engine's.
+      if ("end" in c) {
+        items.push({ label: "End", index: flat.length });
+        flat.push({ kind: "outro", number: num(c.number), handout: c.handout });
+        return;
+      }
       if ("divider" in c) {
         items.push({ label: c.title, index: flat.length });
         flat.push({ kind: "groupdivider", eyebrow: c.eyebrow, title: c.title, tagline: c.tagline,
@@ -130,8 +137,12 @@ export function buildSlides(deck: Deck, baseUrl?: string): { flat: FlatSlide[]; 
       });
     });
     toc.push({ title: sec.title, short: sec.short, tagline: sec.tagline,
-               thumb: sec.thumb ? base + sec.thumb : undefined, dividerIndex, items });
+               thumb: sec.thumb ? base + sec.thumb : undefined, agenda: sec.agenda !== false,
+               dividerIndex, items });
   });
-  flat.push({ kind: "outro", number: num() });
+  // A deck that placed its end slide has already got one; a second would print the mark twice.
+  if (!deck.sections.some((sec) => sec.slides.some((c) => "end" in c))) {
+    flat.push({ kind: "outro", number: num() });
+  }
   return { flat, toc };
 }
