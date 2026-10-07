@@ -21,7 +21,10 @@ const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: ["ignore",
 const step = (msg) => console.log(`— ${msg}`);
 
 // ---- the tarball -------------------------------------------------------------------------------
-const packed = JSON.parse(run("npm", ["pack", "--json", "--pack-destination", tmpdir()], root))[0];
+// npm 11 prints a list with one entry; npm 12 an object keyed by package name. The first
+// release run broke on exactly that, so read either.
+const packJson = JSON.parse(run("npm", ["pack", "--json", "--pack-destination", tmpdir()], root));
+const packed = Array.isArray(packJson) ? packJson[0] : Object.values(packJson)[0];
 const tgz = join(tmpdir(), packed.filename);
 const paths = packed.files.map((f) => f.path);
 

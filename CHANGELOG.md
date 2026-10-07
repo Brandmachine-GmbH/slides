@@ -3,7 +3,13 @@
 Until 1.0, a minor version (0.2.0) may change something a site relies on, and says what here. A
 patch version (0.1.1) never does.
 
-## 0.1.1
+## 0.1.2
+
+The same change as 0.1.1, which was tagged but never published: its release run failed on a
+change in npm 12's output, before anything was uploaded. The release workflow now pins npm 11
+and the package check reads either output.
+
+## 0.1.1 (not published)
 
 - The `/admin` index names the editor **Review & edit** and draws it as the card's second
   action. It was a faint grey "Edit copy" pill, which undersold an editor that reorders, cuts,

@@ -29,8 +29,10 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
-      # Trusted publishing needs npm 11.5 or later; Node 22 ships an older one.
-      - run: npm install -g npm@latest
+      # Trusted publishing needs npm 11.5 or later, and Node 22 ships an older one. Pinned to
+      # the 11 line rather than @latest: npm 12 arrived and changed `npm pack --json`, which
+      # failed the first tagged release. A new npm major is adopted on purpose, not on a tag.
+      - run: npm install -g npm@^11.5
       - run: npm ci
       # The tag must match package.json, or a release could go out under the wrong number.
       - run: test "v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
