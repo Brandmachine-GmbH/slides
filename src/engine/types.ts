@@ -664,6 +664,11 @@ export interface Brand {
     /** HTML, so the greeting can break where it should rather than wherever it fits. */
     headingHtml: string;
     hint: string;
+    /** The rest of the screen's words, optional so a brand.json written before them still
+     *  builds, and so a site in another language can say them in it. Defaults in Gate.tsx. */
+    placeholder?: string;
+    button?: string;
+    error?: string;
   };
   /** Our own product names, which appear in decks on purpose and must not be mistaken for a
    *  client's brand by check-leaks.mjs. A deck titled with one of these finds the product in

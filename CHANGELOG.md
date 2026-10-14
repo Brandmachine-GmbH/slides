@@ -3,6 +3,19 @@
 Until 1.0, a minor version (0.2.0) may change something a site relies on, and says what here. A
 patch version (0.1.1) never does.
 
+## 0.1.3
+
+- A presenter's **steps** switch, `s` or the list icon beside the light/dark toggle. Off, a
+  staged figure or scene arrives with every beat already shown, and Space, PageDown and a click
+  move a whole slide. For browsing a deck you are not rehearsing, where the beats interrupt every
+  jump. A slide's entrance animation and a mockup's demo chapters are unchanged. Remembered in
+  the browser for every deck on the site, unlike light/dark, which is per deck. On by default.
+- The passcode screen is the site's own. It shows `brand/logo.svg` (the neutral mark when a site
+  has none), its colours are `--gate-*` tokens a `theme.css` can override, its ground and wash
+  follow the slides' by default, and every part carries a `data-gate` attribute for styling the
+  tokens do not reach. `brand.json` can also set `gate.placeholder`, `gate.button` and
+  `gate.error`. A site that sets none of this looks as before, plus its logo.
+
 ## 0.1.2
 
 The same change as 0.1.1, which was tagged but never published: its release run failed on a

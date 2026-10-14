@@ -9,4 +9,17 @@
  */
 :root {
   /* --orange: #ff5500; */
+
+  /* The passcode screen. Ground and wash follow the slides' unless set here.
+  --gate-ground: #ffffff;
+  --gate-wash: none;
+  --gate-field-bg: #ffffff;
+  --gate-field-border: #e1e1e1;
+  --gate-button-text: #ffffff;
+  --gate-error: #d23b3b;
+  --gate-logo-size: 44px; */
 }
+
+/* Anything the tokens do not reach, through the screen's data-gate parts: screen, box, logo,
+   eyebrow, heading, hint, form, input, button, error. For example, no logo:
+[data-gate="logo"] { display: none; } */

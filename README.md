@@ -42,8 +42,9 @@ optional except `decks/`:
 | --- | --- |
 | Your decks | `decks/<name>/`: `deck.ts`, `slug.txt`, optional `internal.json`, `images/`, `videos/` |
 | Your name, live URL, passcode-screen copy | `brand.json` |
-| Your wordmark | `brand/logo.svg` |
+| Your wordmark, on the slides and the passcode screen | `brand/logo.svg` |
 | Your colours and fonts | `theme.css`, loaded after the engine's tokens, so a rule there overrides them |
+| Your passcode screen's look | `theme.css`: the `--gate-*` tokens, and `[data-gate="…"]` for anything else |
 | Drawings one deck owns | `decks/<name>/scenes/`, registered in that folder's `index.ts` |
 | Driven embeds of other software | `mockups/index.ts` |
 

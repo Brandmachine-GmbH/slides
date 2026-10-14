@@ -1,6 +1,6 @@
-/* The presenter's corner: the colour-scheme toggle and Contents, as one fixed group. The group
-   owns the position (and the view-transition name, see Toc.tsx) so the buttons sit side by side
-   without either needing to know how wide the other is. Contents stays the right-hand one, where
+/* The presenter's corner: the colour-scheme and steps toggles and Contents, as one fixed group.
+   The group owns the position (and the view-transition name, see Toc.tsx) so the buttons sit side
+   by side without any needing to know how wide the others are. Contents stays the right-hand one, where
    it always was, so a presenter's hand finds it in the same place. */
 .dock {
   position: fixed; right: calc(16px + env(safe-area-inset-right, 0px));

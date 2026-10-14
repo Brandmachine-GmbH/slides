@@ -4,7 +4,10 @@
   "gate": {
     "eyebrow": "Example",
     "headingHtml": "Good to have<br/>you here.",
-    "hint": "Enter the passcode you were given."
+    "hint": "Enter the passcode you were given.",
+    "placeholder": "Password",
+    "button": "Enter",
+    "error": "Hmm, not quite."
   },
   "products": []
 }

@@ -29,8 +29,9 @@ Swapping in your own fonts is a matter of replacing these files and the `@font-f
 
 ## Icons
 
-The light/dark toggle in `src/engine/Toc.tsx` draws Lucide's "moon" and "sun" paths, inlined
-rather than imported so the engine does not load lucide-react for two icons.
+The light/dark and steps toggles in `src/engine/Toc.tsx` draw Lucide's "moon", "sun",
+"list-ordered" and "list" paths, inlined rather than imported so the engine does not load
+lucide-react for four icons.
 
 ```
 ISC License

@@ -9,6 +9,7 @@ import { SlideBody } from "./SlideBody";
 import type { StoryController } from "./types";
 import { Viewer } from "./Viewer";
 import { applyColorScheme, readStoredScheme, storeScheme, type ColorScheme } from "./colorScheme";
+import { readStoredSteps, storeSteps, StepsCtx } from "./buildSteps";
 import s from "./SlideShow.module.css";
 import "./transitions.css";
 
@@ -184,6 +185,24 @@ export function SlideShow({ deck }: { deck: Deck }) {
       return next;
     });
   }, []);
+  // Whether staged slides play beat by beat, remembered across every deck (see buildSteps.ts).
+  const [steps, setSteps] = useState<boolean>(readStoredSteps);
+  // A word on screen for a moment after the switch. Without it the only sign that `s` did
+  // anything is the dots going away, and most slides have no dots to lose.
+  const [stepsNotice, setStepsNotice] = useState<{ on: boolean; n: number } | null>(null);
+  const toggleSteps = useCallback(() => {
+    const next = !steps;
+    setSteps(next);
+    storeSteps(next);
+    // `n` makes every press a new notice, so pressing twice in a row restarts the timer and the
+    // fade rather than letting the first press's timer hide the second notice early.
+    setStepsNotice((prev) => ({ on: next, n: (prev?.n ?? 0) + 1 }));
+  }, [steps]);
+  useEffect(() => {
+    if (!stepsNotice) return;
+    const t = window.setTimeout(() => setStepsNotice(null), 1400);
+    return () => window.clearTimeout(t);
+  }, [stepsNotice]);
 
   // Read inside `show` without making it a dependency, so its identity stays stable across
   // slides and the nav components below do not re-render for a reason that is not theirs.
@@ -405,6 +424,8 @@ export function SlideShow({ deck }: { deck: Deck }) {
       // it can never fire by accident mid-performance, and it is live with Contents open for the
       // same reason `c` is. Modifiers are left alone so Cmd+D still bookmarks.
       if (e.key.toLowerCase() === "d" && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); toggleScheme(); return; }
+      // `s` for steps, a letter for the same reason as `d`. Cmd+S is left to the browser.
+      if (e.key.toLowerCase() === "s" && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); toggleSteps(); return; }
       if (tocOpen) return;
       // Two verbs, on two sets of keys, split by what is in your hand rather than by symbol.
       //
@@ -437,7 +458,7 @@ export function SlideShow({ deck }: { deck: Deck }) {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [i, tocOpen, viewerAt, flat.length, show, toggleScheme]);
+  }, [i, tocOpen, viewerAt, flat.length, show, toggleScheme, toggleSteps]);
 
   const slide = flat[i];
 
@@ -465,15 +486,17 @@ export function SlideShow({ deck }: { deck: Deck }) {
           {/* `key={i}` remounts on every slide change, which is what makes the entrance
               animations replay and what stops a mockup or a staged figure carrying its
               revealed state over to the next slide. */}
-          <SlideBody
-            key={i}
-            slide={slide}
-            deck={deck}
-            toc={toc}
-            onJump={show}
-            onOpenViewer={setViewerAt}
-            controllerRef={stepRef}
-          />
+          <StepsCtx.Provider value={steps}>
+            <SlideBody
+              key={i}
+              slide={slide}
+              deck={deck}
+              toc={toc}
+              onJump={show}
+              onOpenViewer={setViewerAt}
+              controllerRef={stepRef}
+            />
+          </StepsCtx.Provider>
         </div>
       </div>
 
@@ -498,7 +521,15 @@ export function SlideShow({ deck }: { deck: Deck }) {
         onJump={(idx) => show(idx, () => setTocOpen(false))}
         scheme={scheme}
         onToggleScheme={toggleScheme}
+        steps={steps}
+        onToggleSteps={toggleSteps}
       />
+
+      {stepsNotice && (
+        <div key={stepsNotice.n} className={s.notice} role="status">
+          {stepsNotice.on ? "Steps on" : "Steps off"}
+        </div>
+      )}
     </>
   );
 }

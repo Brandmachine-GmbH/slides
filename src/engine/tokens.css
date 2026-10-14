@@ -46,6 +46,22 @@
     radial-gradient(ellipse 46% 50% at 88% 86%, rgba(244,194,255,0.38), transparent 62%),
     radial-gradient(ellipse 40% 42% at 90% 14%, rgba(255,179,122,0.30), transparent 60%);
 
+  /* The passcode screen. Tokens so a site's theme.css can make it its own: before these it was
+     Brandmachine's white and pastel washes on every site, whatever the site's slides looked
+     like. The ground and wash default to the slides' own, so a site that restyles its slides
+     gets a matching passcode screen without touching these. The accent, heading and hint use
+     --orange, --ink and --muted like everything else. Only light: the presenter's dark switch
+     lives inside the deck, past this screen. */
+  --gate-ground: var(--stage-ground);
+  --gate-wash: var(--slide-wash);
+  --gate-field-bg: #ffffff;
+  --gate-field-border: #e1e1e1;
+  --gate-button-text: #ffffff;
+  --gate-error: #d23b3b;
+  /* The site's logo above the eyebrow. Drawn as an <img>, so the SVG's own colours are what
+     show: currentColor inside it resolves to black, not to --ink. */
+  --gate-logo-size: 44px;
+
   /* Card material, for the raised surfaces on a slide: the overview's rows and a plan slide's
      cards. They were separately invented, both a flat #fff rectangle with a #ececec hairline and
      a 6% shadow, which is what a wireframe of a card looks like rather than a card. One

@@ -33,3 +33,26 @@
   content: ""; position: absolute; inset: 0; pointer-events: none;
   background: var(--slide-wash);
 }
+
+/* "Steps on" / "Steps off" after the switch. Top centre, level with the presenter's corner and
+   in the same glass as its buttons, because it is chrome talking to the presenter and must not
+   read as part of the slide. Not clickable, so it can never swallow a click meant to advance. */
+.notice {
+  position: fixed; left: 50%; transform: translateX(-50%); z-index: 22;
+  top: calc(var(--chrome-top, 0px) + 14px + env(safe-area-inset-top, 0px));
+  pointer-events: none;
+  font-family: "Inter", sans-serif; font-size: var(--type-ui);
+  font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.92);
+  background: rgba(16,16,20,0.72); border: 1px solid rgba(255,255,255,0.16); border-radius: 999px;
+  padding: 9px 18px;
+  -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.34);
+  /* Must end at or before the 1400ms timer in SlideShow.tsx that unmounts it. */
+  animation: notice 1.4s ease forwards;
+}
+@keyframes notice {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  75% { opacity: 1; }
+  100% { opacity: 0; }
+}
