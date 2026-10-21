@@ -26,11 +26,13 @@ lockfile that `npm ci` and Netlify's deploy both refuse. `npx slides` on its own
 | Command | Does |
 | --- | --- |
 | `slides new <deck>` | a new deck under `decks/<deck>/`, with its own fresh secret slug |
-| `slides dev <deck>` | one deck, reloading as you edit |
-| `slides build` | every deck into `dist/`, the `/admin` index and editor, and every check |
+| `slides check [deck]` | typecheck and shape-check one deck, or all of them |
+| `slides dev <deck>` | serve one deck, reloading as you edit; prints the deck's type errors as warnings |
+| `slides build` | check every deck, then build all of them into `dist/` with the `/admin` index and editor |
 | `slides serve [--build]` | the built site at localhost:8888, `/admin` included, no password |
-| `slides pdf <deck>` | a vector PDF leave-behind (needs Google Chrome installed) |
+| `slides pdf <deck> [--out f]` | check the deck, then a vector PDF leave-behind (needs Google Chrome); exports can run in parallel |
 | `slides motion <deck>` | measures every transition in a deck for jumps (needs Google Chrome) |
+| `slides migrate <deck>` | rewrites a 0.1 deck.ts into the 0.2 shape in place, comments kept |
 | `slides verify [url]` | checks a deployed site: the gate, the headers, the neutral root |
 
 ## Your site
@@ -44,6 +46,7 @@ optional except `decks/`:
 | Your name, live URL, passcode-screen copy | `brand.json` |
 | Your wordmark, on the slides and the passcode screen | `brand/logo.svg` |
 | Your colours and fonts | `theme.css`, loaded after the engine's tokens, so a rule there overrides them |
+| Named looks a deck or a single slide can choose | `themes/<name>.css`, one file per theme (see Themes below) |
 | Your passcode screen's look | `theme.css`: the `--gate-*` tokens, and `[data-gate="…"]` for anything else |
 | Drawings one deck owns | `decks/<name>/scenes/`, registered in that folder's `index.ts` |
 | Driven embeds of other software | `mockups/index.ts` |
@@ -69,29 +72,117 @@ one, but it cannot know whether a slug was ever sent to anyone, so never reuse o
 ```ts
 import type { Deck } from "@brandmachine/slides";
 
-const deck: Deck = {
+const deck = {
   passcodes: ["Client Brand"],
-  title:  { eyebrow: "You", headingHtml: "One idea,<br/>two lines.", sub: "A subtitle." },
-  agenda: { eyebrow: "Overview", heading: "What we'll cover." },
-  sections: [{
-    id: "one",
-    title: "First section",
-    tagline: "A short line under the chapter heading.",
-    slides: [
-      { eyebrow: "Label", headline: "A claim, not a topic." },
-      { stack: true, title: "Evidence wider than it is tall.",
-        blocks: [{ figure: "images/figures/how.svg" }] },
-    ],
-  }],
-};
+  slides: [
+    { type: "title", eyebrow: "You", headingHtml: "One idea,<br/>two lines.", sub: "A subtitle." },
+    { type: "toc", eyebrow: "Overview", heading: "What we'll cover." },
+    {
+      type: "section",
+      id: "one",
+      title: "First section",
+      tagline: "A short line under the chapter heading.",
+      slides: [
+        { type: "content", eyebrow: "Label", headline: "A claim, not a topic." },
+        { type: "stack", title: "Evidence wider than it is tall.",
+          blocks: [{ figure: "images/figures/how.svg" }] },
+      ],
+    },
+    { type: "end" },
+  ],
+} satisfies Deck;
 
 export default deck;
 ```
 
-Slide kinds: video, images, showcase, viewer, plan, stack, scene, mockup, divider. Every field
-is documented in `node_modules/@brandmachine/slides/src/engine/types.ts`, which is written as
-prose rather than as a list of types. `decks/example/deck.ts` from `slides init` is the worked
-example.
+**The deck is `slides`, in order, and nothing else.** Every slide says what it is with `type`:
+`title`, `toc`, `content`, `divider`, `plan`, `showcase`, `viewer`, `stack`, `scene`, `mockup`,
+`film`, `end`, and `section` for a chapter. The title, the table of contents and the end slide are
+placed like any other slide, anywhere or not at all; the engine adds nothing except a divider at
+the head of each section (`divider: false` declines it). A deck has at most one `title` and one
+`end`; a `toc` may appear more than once.
+
+**Typed per kind.** `Slide` is a union on `type`, so in an editor `type: "` lists every kind and
+each kind then offers and requires exactly its own fields: `steps` on a `film` or a `showcase`
+without `images` is an error on that line. Write `satisfies Deck` rather than `const deck: Deck`,
+which keeps the literal types and points errors at the slide. Theme, scene and mockup names are
+typed from the site itself: every `slides` command writes `.slides/names.d.ts` (gitignored) from
+`themes/`, each deck's `scenes/index.ts` and `mockups/index.ts`, so `theme: "keynot"` is an error
+in the editor. Include `.slides/names.d.ts` in the site's tsconfig (`slides init` does).
+
+**Checked before anything is built.** Vite strips types without checking them, so `slides build`
+typechecks every deck first and `slides pdf` the deck it is given, and both stop on an error;
+`slides dev` prints the same errors as warnings and starts anyway. Each also refuses a second
+title or end slide and a name the site does not register. `slides check [deck]` runs only the
+checks. Every field is documented in `node_modules/@brandmachine/slides/src/engine/types.ts`,
+which is written as prose rather than as a list of types. `decks/example/deck.ts` from
+`slides init` is the worked example.
+
+**From 0.1:** `npx slides migrate <deck>` rewrites a deck.ts in place, comments and formatting
+kept; see CHANGELOG.md for what changes.
+
+## Themes
+
+`theme.css` changes the look of the whole site. A theme is a look a deck chooses, or one slide
+within a deck: `theme: "night"` on the deck, on a slide, or on a section (where it applies to
+that section's divider only). A slide's theme replaces the deck's for that slide; it is not
+layered on top. The engine ships no themes of its own; `slides init` writes one example,
+`themes/night.css`.
+
+A theme is a stylesheet in `themes/`, its filename is its name, and every rule in it is scoped
+to that name:
+
+```css
+[data-deck-theme="night"] {
+  --stage-ground: #0b0b0c;
+  --ink: #f4f4f2;
+  --slide-wash: none;
+}
+```
+
+The engine sets `data-deck-theme` on the element that paints each slide's ground: the stage in
+the slideshow, each page of the PDF, each thumbnail in the editor, and the passcode screen. It
+never sets it on the page as a whole, which is why every page of a PDF can have its own theme
+and why a slide looks the same in any deck. A change of theme between two slides is part of the
+ordinary dissolve.
+
+Any token in `node_modules/@brandmachine/slides/src/engine/tokens.css` can be set. A theme may
+give a step of the type scale a new value; it may not add a step, and `slides build` fails on a
+raw `font-size` in a theme, on a slide naming a theme with no file, and on a theme file with no
+rule for its own name.
+
+**The presenter's light/dark switch.** A token a theme sets wins in both light and dark; a token
+it leaves alone follows the switch. A light theme that wants its own values in the dark adds a
+second rule, which outranks the first:
+
+```css
+[data-color-scheme="dark"] [data-deck-theme="paper"] { --hairline: #2f3232; }
+```
+
+**A theme whose ground is dark** looks the same with the switch on or off, provided it sets the
+three things that cannot follow `--ink` on their own:
+
+- its card material (`--card-face`, `--card-edge`, `--surface`, `--solid` and friends), or light
+  cards sit under its light type;
+- `color-scheme: dark`, which inline SVG figures read to swap their drawn palette for the tokens;
+- `--mark-filter: invert(1)`, because the logo is an `<img>` of a black mark.
+
+**Layout hooks.** A few things a theme may want to change are not colours or sizes, and the
+slide components' class names are hashed, so they are tokens too. Each is read with today's
+value as its fallback, so a theme that does not set it changes nothing:
+
+| Token | What it changes | Default |
+| --- | --- | --- |
+| `--caption-ground`, `--caption-blur`, `--caption-edge`, `--caption-lift` | the glass card under a full-bleed showcase's caption: background, backdrop blur, border, shadow | the card |
+| `--caption-inset`, `--caption-width`, `--caption-padding` | where the caption sits and how wide | `48px`, `452px`, the card's padding |
+| `--caption-scrim` | a background drawn over the pictures and under the caption, e.g. a bottom gradient | `none` |
+| `--type-show-caption` | the caption title's size, as a step of the scale (`var(--type-title)`) | `var(--type-subhead)` |
+| `--divider-align` | `center` centres section dividers and `divider: true` statement slides | left |
+| `--divider-kicker` | `none` hides the "Section 2" (or `short`) kicker above a section divider | shown |
+
+The glass card is the default for a reason: a scrim faint enough for a dark photograph vanishes
+on a near-white one, and a card keeps the type off the seam between two pictures. A theme that
+trades it for type on the picture needs a scrim strong enough for its lightest image.
 
 ## Privacy
 

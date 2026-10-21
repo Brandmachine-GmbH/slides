@@ -297,14 +297,22 @@ export async function checkLeaks({ dist, decksDir }) {
       const body = readFileSync(src, "utf8");
       // The authored headline and every passcode: short, distinctive, and present in any
       // plausible way a deck could end up bundled.
-      const head = /headingHtml:\s*"([^"]{8,})"/.exec(body)?.[1]?.replace(/<[^>]+>/g, " ").trim();
+      const raw = /headingHtml:\s*"([^"]{8,})"/.exec(body)?.[1];
+      const head = raw?.replace(/<[^>]+>/g, " ").trim();
+      // Searched for as the longest run between tags, not the tag-stripped headline: a bundle
+      // carries the string with its markup, so "Product + Content<br/>+ Brand DNA" stripped to
+      // "Product + Content +" matches nothing and the check silently passes.
+      const needle = raw?.split(/<[^>]+>/).map((p) => p.trim()).sort((a, b) => b.length - a.length)[0];
       // Same exemption as the site's own name below, for the same reason. A deck whose headline
       // is one of our own product names finds that product in the admin bundle, not a leak: a
       // deck can be titled "Designer" while /_admin/ ships a DesignerEmbed component and a
       // sidebar naming every product. A client's brand as a headline is still worth failing on,
       // which is why this is a list of ours (brand.json) rather than a length floor.
-      if (head && !OUR_PRODUCTS.includes(head.toLowerCase().trim())) {
-        deckStrings.push({ from: `${name.name}/deck.ts`, text: head.split(/\s+/).slice(0, 4).join(" ") });
+      // Both the whole headline and the piece searched for are tested: "Meet the<br/>Product
+      // Studio" searches for "Product Studio", which the admin bundle ships in its own chrome.
+      if (head && needle && needle.length >= 8 && !OUR_PRODUCTS.includes(head.toLowerCase().trim())
+          && !OUR_PRODUCTS.includes(needle.toLowerCase())) {
+        deckStrings.push({ from: `${name.name}/deck.ts`, text: needle });
       }
       for (const m of body.matchAll(/passcodes:\s*\[([^\]]*)\]/g)) {
         for (const q of m[1].matchAll(/"([^"]{4,})"/g)) {
@@ -379,6 +387,6 @@ export async function checkLeaks({ dist, decksDir }) {
     console.error("if the material is genuinely safe for a client to read.\n");
     process.exit(1);
   }
-  console.log(`— leak check: ${files.length} files, ${images.length} images `
+  console.log(`· leak check: ${files.length} files, ${images.length} images `
     + `(${parsed} metadata-parsed, ${textScanned} text-scanned), clean`);
 }

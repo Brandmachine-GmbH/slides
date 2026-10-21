@@ -3,6 +3,87 @@
 Until 1.0, a minor version (0.2.0) may change something a site relies on, and says what here. A
 patch version (0.1.1) never does.
 
+## 0.2.0
+
+**Breaking: every slide has a `type`, and the deck is one ordered `slides` list.** The engine no
+longer adds a title, an overview or an end slide; a deck places each of them, wherever it wants
+them or not at all. `npx slides migrate <deck>` rewrites a 0.1 deck.ts in place, keeping every
+comment, so that it renders the same slides in the same order with the same numbers:
+
+| 0.1 | 0.2 |
+| --- | --- |
+| `const deck: Deck = { ... }` | `const deck = { ... } satisfies Deck` |
+| `title: { eyebrow, headingHtml, sub, images? }` on the deck | `{ type: "title", eyebrow, headingHtml, sub, images? }` as a slide |
+| `agenda: { eyebrow, heading }` on the deck | `{ type: "toc", eyebrow, heading }` as a slide (it was only shown when a deck had two or more sections) |
+| `sections: [ { id, title, ... } ]` | `slides: [ { type: "section", id, title, ... } ]`, beside any slide that belongs to no section |
+| `agenda: false` on a section | `toc: false` |
+| the automatic outro | `{ type: "end" }`, placed (it was already placeable as `{ end: true }`) |
+| `{ eyebrow, headline, ... }` (no flag) | `{ type: "content", eyebrow, headline, ... }` |
+| `{ divider: true, ... }` | `{ type: "divider", ... }` |
+| `{ plan: true, ... }`, `showcase`, `stack`, `viewer`, `film` | `{ type: "plan", ... }` and so on |
+| `{ scene: "value-chain", ... }` | `{ type: "scene", name: "value-chain", ... }` |
+| `{ mockup: "designer", ... }` | `{ type: "mockup", name: "designer", ... }` |
+| `{ end: true }` | `{ type: "end" }` |
+
+- **Slides are a discriminated union** on `type`: each kind accepts and requires exactly its own
+  fields, and an editor lists the kinds after `type: "`. Theme, scene and mockup names are typed
+  from the site through `.slides/names.d.ts`, which every command regenerates (add `.slides/` to
+  `.gitignore` and `.slides/names.d.ts` to the tsconfig `include`; `slides init` does both).
+- **Decks are typechecked.** `slides build` typechecks every deck before building and stops on an
+  error; `slides pdf <deck>` checks that deck first and stops too, since a PDF is a deliverable;
+  `slides dev <deck>` prints the deck's errors as warnings and starts the preview anyway. `slides check [deck]`
+  runs the checks alone: types, then at most one `title` and one `end` per deck, every `type`
+  known, and every theme, scene and mockup name registered.
+- **`slides pdf <deck> --out <file>`** writes the PDF anywhere. Exports can run in parallel in one
+  checkout: each takes a free port and its own Vite dependency cache. Vite's cache is now per deck
+  (`node_modules/.vite/slides-<deck>`), so two dev servers no longer reload each other either.
+- The Contents panel and the bottom nav list slides that belong to no section in deck order around
+  the sections: before the first section they are "Intro", after the last "Outro". A loose end
+  slide gets no Contents row, as the outro never had one.
+- In `/admin`, the title and toc are ordinary cards (draggable, cuttable), and edit paths read
+  `slides[3].slides[0].title` where they read `sections[2].slides[0].title`.
+- The engine's own package check (`make check`) no longer leaves a `serve` process running.
+
+**Breaking:** the engine no longer ships the `editorial` theme. A site that uses
+`theme: "editorial"` must add it as `themes/editorial.css` before upgrading, or the build fails
+naming the decks that use it. The rules are the ones that were in `tokens.css`, rescoped from
+`:root[data-deck-theme="editorial"]` to `[data-deck-theme="editorial"]`; its three greys
+(`--stone`, `--mist`, `--graphite`) also need their dark values in a
+`[data-color-scheme="dark"] [data-deck-theme="editorial"]` rule, since the engine's dark scheme
+no longer carries `--stone` and `--graphite`.
+
+- **Themes belong to the site.** `themes/<name>.css`, scoped under `[data-deck-theme="<name>"]`,
+  selected with `theme: "<name>"`, which is now any string. `slides build` fails on a name with
+  no file, on a theme file with any rule not scoped to its own name, and on a raw `font-size` in a theme.
+  `slides init` writes an example, `themes/night.css`, used on one slide of the example deck.
+- **A slide can have its own theme.** `theme` on any slide, on the title and the overview, and
+  on a section for its divider. It replaces the deck's theme for that slide. The slideshow
+  dissolves from one theme's ground to the next, the PDF prints each page in its own theme, and
+  the editor draws each thumbnail in its own.
+- The theme attribute moved off `<html>` onto each slide's ground (the stage, `.bmx-slide` in the
+  PDF, the editor's thumbnail) and the passcode screen. A site stylesheet that selected
+  `:root[data-deck-theme=...]` must drop the `:root`.
+- `--label-color`, `--type-stack-head`, `--solid`, `--gate-ground` and `--gate-wash` are no
+  longer declared on `:root`; they are read with their old defaults as fallbacks, so a theme
+  that changes `--orange`, `--type-title`, `--ink`, `--stage-ground` or `--slide-wash` carries
+  them along. Setting any of them in `theme.css` or a theme works as before. Reading one in a
+  site's own CSS now needs the same fallback, e.g. `var(--label-color, var(--orange))`, since
+  without a declaration on `:root` a bare `var(--label-color)` resolves to nothing.
+- The PDF's slide box paints `--stage-ground` instead of relying on the white page, so a site
+  whose `theme.css` changes the ground now gets it in the PDF too.
+- **Theme hooks for layout:** `--caption-*` and `--type-show-caption` for a full-bleed
+  showcase's caption (card, scrim, position, title size), `--divider-align` and
+  `--divider-kicker` for section and statement dividers. Every one defaults to what was drawn
+  before. See the README's Themes section.
+- **A dark theme can say so.** The logo's dark-ground inversion is now `--mark-filter`, set by
+  the dark scheme and by any theme that needs it, instead of a rule only the presenter's switch
+  could trigger. Inline SVG figures swap their palette on `color-scheme: dark` (through
+  `light-dark()`), which a theme can set, instead of only under the switch. Both look exactly as
+  before without a theme. `light-dark()` needs Safari 17.5, Chrome 123 or Firefox 120; an older
+  browser keeps a figure's drawn colours in the dark.
+- The passcode screen's logo also takes `--mark-filter`, so a dark deck theme does not put a black
+  logo on its black ground.
+
 ## 0.1.3
 
 - A presenter's **steps** switch, `s` or the list icon beside the light/dark toggle. Off, a

@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { EditApp } from "./EditApp";
 import "@engine/tokens.css";       // the deck's own tokens: the thumbnails are real slides
 import "@site-theme";
+import "@site-themes";             // every theme, because one sheet can show slides in several
 import "@active-fonts";
 import "./edit-chrome.css";
 

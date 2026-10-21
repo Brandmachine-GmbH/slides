@@ -12,33 +12,35 @@
  */
 import type { Deck } from "@brandmachine/slides";
 
-const deck: Deck = {
+const deck = {
   // Any of these opens the deck; matching ignores case, spaces and punctuation. A real deck
   // usually lists the client's brand, which is what they are told.
   passcodes: ["example"],
 
-  title: {
-    eyebrow: "Slides",
-    headingHtml: "A deck is a file,<br/>not a document.",
-    sub: "The slideshow engine behind client decks that live at a secret URL.",
-    job: "Land the one idea the whole engine rests on: slides are data under version control.",
-  },
-
-  agenda: {
-    eyebrow: "Overview",
-    heading: "What you get.",
-  },
-
-  sections: [
+  slides: [
     {
+      type: "title",
+      eyebrow: "Slides",
+      headingHtml: "A deck is a file,<br/>not a document.",
+      sub: "The slideshow engine behind client decks that live at a secret URL.",
+      job: "Land the one idea the whole engine rests on: slides are data under version control.",
+    },
+    {
+      type: "toc",
+      eyebrow: "Overview",
+      heading: "What you get.",
+    },
+    {
+      type: "section",
       id: "what",
       title: "What this is",
       tagline: "One file in, one private link out.",
       // An opening beat rather than a chapter, so it does not announce itself with a divider.
-      // It still appears in the overview and the bottom bar, which jump to its first slide.
+      // It still appears in the table of contents and the bottom bar, which jump to its first slide.
       divider: false,
       slides: [
         {
+          type: "content",
           eyebrow: "The shape of it",
           headline: "Write the deck. Build it. Send the link.",
           paragraph:
@@ -47,7 +49,7 @@ const deck: Deck = {
           job: "Make it concrete before any of the machinery shows up.",
         },
         {
-          stack: true,
+          type: "stack",
           eyebrow: "How it runs",
           title: "Three steps, and the last one is the whole privacy model.",
           handout:
@@ -59,13 +61,14 @@ const deck: Deck = {
       ],
     },
     {
+      type: "section",
       id: "authoring",
       title: "Writing one",
       short: "Authoring",
       tagline: "The parts you actually touch.",
       slides: [
         {
-          plan: true,
+          type: "plan",
           eyebrow: "Three things to know",
           headline: "Most of a deck is three fields.",
           steps: [
@@ -76,7 +79,7 @@ const deck: Deck = {
           job: "Answer the first question anyone asks, which is where the words go.",
         },
         {
-          scene: "chain",
+          type: "scene", name: "chain",
           eyebrow: "When a picture has to move",
           title: "A drawing the deck can drive.",
           steps: [
@@ -88,6 +91,10 @@ const deck: Deck = {
           job: "Show the escape hatch exists without making it sound like the normal route.",
         },
         {
+          type: "content",
+          // In the site's themes/night.css rather than the deck's look, to show that a theme can
+          // be one slide's. It replaces the deck's theme for this slide only.
+          theme: "night",
           eyebrow: "Presenting",
           headline: "Space plays. The arrows move.",
           paragraph:
@@ -97,9 +104,10 @@ const deck: Deck = {
         },
       ],
     },
+    { type: "end" },
   ],
 
   job: "Show what the engine does by being a deck built with it, not a page describing it.",
-};
+} satisfies Deck;
 
 export default deck;

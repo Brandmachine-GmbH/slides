@@ -33,6 +33,11 @@ html, body, #root {
   position: relative;
   width: 1280px; height: 720px;
   overflow: hidden;
+  /* The slide's own ground and ink, as the stage has in the live deck. The page under it stays
+     white for the handout band; a theme with a dark ground darkens the slide and not the band.
+     `color` for the same reason as on SlideShow's stage: body resolved --ink on itself. */
+  background: var(--stage-ground);
+  color: var(--ink);
 }
 
 /* The band under the slide. Deliberately quiet: it is reference material for someone reading

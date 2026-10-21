@@ -203,6 +203,45 @@ function stripJobs(): PluginOption {
   };
 }
 
+/* The site's themes: one stylesheet per theme in themes/, all of them imported by the entry.
+ *
+ * A virtual module rather than an alias like @site-theme, because it is a folder of files and an
+ * alias names one. Not import.meta.glob either: the site sits outside Vite's root (the package
+ * is the root, see below), and through `npm link` the relative path from the engine to the site
+ * is a different path again.
+ *
+ * Every theme goes into every bundle, unlike a deck's scenes. A theme is the site's look rather
+ * than one client's material, so nothing private crosses between decks, and the editor shows the
+ * slides of any deck on one page and needs them all. Each is scoped under its own
+ * [data-deck-theme="<name>"], so a theme no slide names costs some bytes and changes nothing.
+ * build.mjs checks the names and the scoping. */
+const themesDir = join(userRoot, "themes");
+const THEME_FILE = /^[a-z0-9-]+\.css$/;
+function siteThemes(): PluginOption {
+  const id = "\0site-themes";
+  const files = () => existsSync(themesDir)
+    ? readdirSync(themesDir).filter((f) => THEME_FILE.test(f)).sort().map((f) => join(themesDir, f))
+    : [];
+  return {
+    name: "site-themes",
+    resolveId: (source) => (source === "@site-themes" ? id : null),
+    load: (loaded) => (loaded === id ? files().map((f) => `import ${JSON.stringify(f)};`).join("\n") + "\n" : null),
+    // Editing a theme is ordinary CSS HMR. Adding or deleting one changes the list itself, which
+    // only this module knows, so without this a new theme needed the dev server restarted.
+    configureServer(server) {
+      server.watcher.add(themesDir);
+      const relist = (file: string) => {
+        if (dirname(file) !== themesDir) return;
+        const mod = server.moduleGraph.getModuleById(id);
+        if (mod) server.moduleGraph.invalidateModule(mod);
+        server.ws.send({ type: "full-reload" });
+      };
+      server.watcher.on("add", relist);
+      server.watcher.on("unlink", relist);
+    },
+  };
+}
+
 // A site's own runtime dependencies (framer-motion for a mockup, say), from its package.json.
 // See optimizeDeps below for why they have to be named rather than discovered.
 const userDeps = (() => {
@@ -232,8 +271,14 @@ export default defineConfig(({ command }) => ({
     noDiscovery: true,
     include: ["react", "react-dom", "react-dom/client", "react/jsx-runtime", "react/jsx-dev-runtime", ...userDeps],
   },
+  // Vite's dependency cache, per deck rather than one for the site, because each deck's config
+  // differs (VITE_DECK, the export flag) and one shared cache was re-optimised under whichever
+  // dev server or export started last, reloading the others. An export passes a folder of its
+  // own (SLIDES_CACHE_DIR, see export-pdf.mjs) so two exports of one deck cannot meet either.
+  cacheDir: process.env.SLIDES_CACHE_DIR
+    || join(userRoot, "node_modules", ".vite", `slides-${isAdmin ? "_admin" : deck}${isExport ? "-export" : ""}`),
   base: isAdmin ? "/_admin/" : command === "build" ? `/${slug}/` : "/",
-  plugins: [lucideIcons(), react(), deckMedia(), stripJobs(), brandHtml()],
+  plugins: [lucideIcons(), react(), deckMedia(), stripJobs(), brandHtml(), siteThemes()],
   define: {
     __EXPORT__: JSON.stringify(isExport),
     // The editor cannot draw deck-local scenes (see @deck-scenes below), so it needs to say

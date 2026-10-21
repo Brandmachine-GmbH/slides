@@ -14,5 +14,5 @@
       "@engine/*": ["./node_modules/@brandmachine/slides/src/engine/*"]
     }
   },
-  "include": ["decks", "mockups", "node_modules/@brandmachine/slides/src/vite-env.d.ts"]
+  "include": ["decks", "mockups", ".slides/names.d.ts", "node_modules/@brandmachine/slides/src/vite-env.d.ts"]
 }

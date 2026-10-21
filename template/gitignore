@@ -10,6 +10,10 @@ decks/*/*.pdf
 # passcode, so they must never be committed; the edge function reads them at deploy time.
 netlify/edge-functions/lib/
 
+# Written by every `slides` command: the site's theme, scene and mockup names as types
+# (names.d.ts), and scratch files. Regenerated on demand, so never worth committing.
+.slides/
+
 .netlify/
 .env
 deno.lock

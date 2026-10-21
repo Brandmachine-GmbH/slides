@@ -8,7 +8,7 @@
 import { spawnSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, join, relative } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 
@@ -20,11 +20,13 @@ const HELP = `slides <command>
 
   init                 set this folder up as a deck site (never overwrites a file)
   new <deck>           a new deck under decks/<deck>/, with its own fresh secret slug
-  dev <deck>           one deck at localhost:5173, reloading as you edit
-  build                every deck into dist/, the /admin index and editor, and every check
+  check [deck]         typecheck and shape-check one deck, or every deck
+  dev <deck>           serve one deck at localhost:5173, reloading as you edit (warns on errors)
+  build                check every deck, then build all of them into dist/ with /admin
   serve [--build]      the built site at localhost:8888, /admin included, no password
-  pdf <deck>           a vector PDF leave-behind at decks/<deck>/<deck>.pdf
+  pdf <deck> [--out f] check the deck, then a vector PDF at decks/<deck>/<deck>.pdf (or f)
   motion <deck>        build, then measure every transition in a deck for jumps
+  migrate <deck|file>  rewrite a 0.1 deck.ts into the 0.2 shape, in place, comments kept
   verify [url]         check a deployed site: the gate, the headers, the neutral root
 `;
 
@@ -111,8 +113,27 @@ switch (cmd) {
     break;
   }
 
+  case "check": {
+    const named = args.find((a) => !a.startsWith("-"));
+    if (named && !decks().includes(named)) fail(`no deck called "${named}". Decks here: ${decks().join(", ") || "none"}`);
+    run("scripts/check.mjs", named ? [named] : []);
+    break;
+  }
+
+  case "migrate": {
+    if (!args.length) fail("usage: slides migrate <deck|path/to/deck.ts> [...]");
+    // A deck name or a path, so `slides migrate brunotti` works from the site and a path works
+    // from anywhere. Resolved here because the script runs with the package as its cwd.
+    const files = args.map((a) => (decks().includes(a) ? join(site, "decks", a, "deck.ts") : resolve(site, a)));
+    run("scripts/migrate-0.2.mjs", files);
+    break;
+  }
+
   case "dev": {
     const deck = deckArg();
+    // A warning, not a stop: a type error in a deck being written is the normal state of a deck
+    // being written, and the preview is how the author finds it. Build and pdf stop on it.
+    run("scripts/check.mjs", [deck, "--warn"]);
     const vite = join(dirname(createRequire(import.meta.url).resolve("vite/package.json")), "bin", "vite.js");
     const extra = args.filter((a) => a !== deck);
     const r = spawnSync(process.execPath, [vite, "--config", join(pkg, "vite.config.ts"), ...extra], {
@@ -130,9 +151,15 @@ switch (cmd) {
     run("scripts/serve.mjs");
     break;
 
-  case "pdf":
-    run("scripts/export-pdf.mjs", [deckArg()]);
+  case "pdf": {
+    const deck = deckArg();
+    const at = args.indexOf("--out");
+    if (at >= 0 && !args[at + 1]) fail("usage: slides pdf <deck> [--out <file.pdf>]");
+    run("scripts/check.mjs", [deck]);
+    // Resolved against the site, not against the package the script runs in.
+    run("scripts/export-pdf.mjs", [deck, ...(at >= 0 ? ["--out", resolve(site, args[at + 1])] : [])]);
     break;
+  }
 
   case "motion": {
     const deck = deckArg();

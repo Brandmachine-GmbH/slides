@@ -20,6 +20,10 @@
   position: relative;
   width: 1280px; height: 720px;
   background: var(--stage-ground);
+  /* Restated although body sets it, because body resolves var(--ink) on itself and hands that
+     colour down: a theme set on the stage (THEMES in tokens.css) would otherwise reach every rule
+     that names --ink but not the type that simply inherits. */
+  color: var(--ink);
   overflow: hidden;
   -webkit-user-select: none; user-select: none;
 }

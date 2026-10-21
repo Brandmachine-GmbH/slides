@@ -51,9 +51,13 @@
      like. The ground and wash default to the slides' own, so a site that restyles its slides
      gets a matching passcode screen without touching these. The accent, heading and hint use
      --orange, --ink and --muted like everything else. Only light: the presenter's dark switch
-     lives inside the deck, past this screen. */
-  --gate-ground: var(--stage-ground);
-  --gate-wash: var(--slide-wash);
+     lives inside the deck, past this screen.
+
+     --gate-ground and --gate-wash are deliberately NOT declared here. Gate.module.css reads them
+     with the slides' --stage-ground and --slide-wash as the fallback, which is what makes "they
+     default to the slides' own" true under a theme too. A var() declared on :root is resolved on
+     :root, so declaring the default here would hand the passcode screen of a themed deck the
+     ground and wash of the unthemed one. Set them in theme.css to override. */
   --gate-field-bg: #ffffff;
   --gate-field-border: #e1e1e1;
   --gate-button-text: #ffffff;
@@ -62,8 +66,8 @@
      show: currentColor inside it resolves to black, not to --ink. */
   --gate-logo-size: 44px;
 
-  /* Card material, for the raised surfaces on a slide: the overview's rows and a plan slide's
-     cards. They were separately invented, both a flat #fff rectangle with a #ececec hairline and
+  /* Card material, for the raised surfaces on a slide: the table of contents' rows and a plan
+     slide's cards. They were separately invented, both a flat #fff rectangle with a #ececec hairline and
      a 6% shadow, which is what a wireframe of a card looks like rather than a card. One
      definition so they cannot drift apart again, and so a third one starts out right.
 
@@ -85,60 +89,74 @@
     0 6px 13px -5px rgba(24,27,27,0.10),
     0 34px 56px -26px rgba(24,27,27,0.42);
 
-  /* The knobs the editorial register turns (see Deck.theme). Each default is exactly what the
-     engine drew before these existed, so a deck that does not opt in cannot tell they are here.
-     --label-mark is a `content` value: `none` draws nothing, "" draws the dot. */
-  --label-color: var(--orange);
+  /* Knobs for a theme to turn (see THEMES below). Each default is exactly what the engine drew
+     before these existed, so a deck with no theme cannot tell they are here.
+     --label-mark is a `content` value: `none` draws nothing, "" draws a dot before each label.
+     --chapter-rule is a `display` value for the orange rule under a section divider's title.
+
+     Two more knobs are read with a fallback and deliberately not declared here, for the reason
+     given under the gate tokens above: --label-color (the colour of every label, falling back to
+     --orange) and --type-stack-head (a stack slide's heading, falling back to --type-title).
+     Declared here they would be resolved once on :root, and a theme that changed --orange or
+     --type-title would get labels and stack headings that did not follow. */
   --label-mark: none;
   --chapter-rule: block;
-  --type-stack-head: var(--type-title);
 
-  /* The knobs the dark scheme turns (see colorScheme.ts). Same promise as the editorial knobs
-     above: each light value is byte for byte the literal it replaced, so with the toggle off
-     nothing can move. They exist only where a literal would have stayed dark on a dark ground or
-     white under off-white type; everything else keeps its literal on purpose.
-     --stage-ground is the paper, --surface a flat raised face (a chip, a prompt box), and --solid
-     the one inverted panel a plan slide draws, which is ink in light and cannot be in dark,
-     because ink is then the colour of the type sitting on it. */
+  /* The knobs the dark scheme turns (see colorScheme.ts). Same promise as the knobs above: each
+     light value is byte for byte the literal it replaced, so with the toggle off nothing can move.
+     They exist only where a literal would have stayed dark on a dark ground or white under
+     off-white type; everything else keeps its literal on purpose.
+     --stage-ground is the paper and --surface a flat raised face (a chip, a prompt box). --solid,
+     the one inverted panel a plan slide draws, is read as var(--solid, var(--ink)) and declared
+     only by the dark block: ink in light, and not ink in dark, because ink is then the colour of
+     the type sitting on it. Not declared here for the same reason as --label-color. */
   --stage-ground: #ffffff;
   --surface: #ffffff;
-  --solid: var(--ink);
   --copy-ink: #2c2f2f;
   --note-ink: #5a5a5a;
   --hairline: #e2ded7;
 }
 
-/* THE EDITORIAL REGISTER
+/* THEMES
    -------------------------------------------------------------------------
-   Opted into per deck with `theme: "editorial"`, never the default, because every client deck
-   shares this file and restyling it in place would redraw decks that were already sent.
+   The engine ships the mechanism and no theme. A theme is a company's look, so it belongs to the
+   site: `themes/<name>.css` there, every rule in it scoped under [data-deck-theme="<name>"], and
+   chosen with `theme: "<name>"` on a deck or on one slide (see Deck.theme). The build fails on a
+   name with no file, the way it does for a scene.
 
-   Orange stops being a text colour. It had become the colour of every label, every chapter rule
-   and the claim boxes, which is emphasis everywhere and therefore nowhere. Here it survives only
-   as a small mark (the dot before a label, a marker in a scene), and the labels themselves go
-   grey. The wash goes too: with real photography on the slides it tinted the pictures.
+   WHERE THE ATTRIBUTE GOES, and why it is never :root. The ground is painted by the element that
+   holds a slide (the stage and its ::before in SlideShow, .bmx-slide in the PDF, the thumbnail
+   stage in the editor), so the tokens have to be set on that element or above it. One level
+   above it is :root, which is where this used to live, and it cannot be there now for two
+   reasons. The PDF prints every page at once, so there is no single theme for the document to
+   carry. And a slide inherits whatever its ancestors set, so a deck theme on :root would leak
+   into a slide that names another theme: the slide would get both, layered, and look different
+   in every deck it was put in. Set on the slide's own ground element, a slide's theme replaces
+   the deck's instead. The passcode screen carries the deck's theme the same way.
 
-   The steps are even: 1.5x between the big roles, about 1.33x between the small ones. The old
-   scale jumped 68 to 40 and then crept 30, 24, 18, which is why a working slide's headline read
-   as small on an empty stage. A scene's heading steps up to the headline size for the same
-   reason: it is the slide's headline, and at 30px it read as a caption. */
-:root[data-deck-theme="editorial"] {
-  --type-display:  72px;
-  --type-headline: 48px;
-  --type-title:    32px;
-  --type-stack-head: var(--type-headline);
-  --stone: #7a7d7c;
-  --mist: #ebe8e4;
-  --graphite: #3d4040;
-  --label-color: var(--stone);
-  --label-mark: "";
-  --chapter-rule: none;
-  --slide-wash: none;
-}
+   So in the slideshow the attribute changes in the same React commit as the slide, inside the
+   view transition's update, and the outgoing snapshot keeps the old ground while the incoming
+   one fades in over it: a theme change is a dissolve from one ground to the other, never a frame
+   of the wrong one.
+
+   THE DARK SCHEME AND A THEME. The scheme is set on :root (below) and a theme on an element under
+   it, so a token a theme sets wins in both schemes and a token it leaves alone follows the
+   scheme. A theme that is already dark therefore needs nothing: its ground stays its ground when
+   the presenter presses `d`. A theme that wants different values in the dark writes them under
+   [data-color-scheme="dark"] [data-deck-theme="<name>"], which outranks its light rule.
+
+   A THEME WHOSE GROUND IS DARK has to say so twice, because two things on a slide cannot follow
+   --ink: `color-scheme: dark` (inline figures recolour their palette, see slides.module.css) and
+   --mark-filter (the logo is an <img>). The dark scheme sets both on :root; such a theme sets
+   both on itself, and then looks the same with the presenter's switch on or off.
+
+   A token whose default is another token (`var(--x)`) must not be declared on :root, or it is
+   resolved there once and a theme that changes --x does not reach it. Read it as
+   var(--token, var(--x)) where it is used instead: see --label-color and the gate tokens. */
 
 /* THE DARK SCHEME
    -------------------------------------------------------------------------
-   A second axis, independent of the register above: the presenter flips it live from the
+   A second axis, independent of the deck's theme: the presenter flips it live from the
    button beside Contents (or `d`), per viewer, and it never reaches the PDF or the editor,
    because only SlideShow sets data-color-scheme. So a deck needs no edit to have it, and the
    light version every client was sent stays exactly what it was.
@@ -153,8 +171,14 @@
    which keeps STYLE.md's rule that the strongest mark is the ground's opposite.
 
    The tokens only ever defined here (--slide-ground, --slide-muted, --line, --faint, --on-ink,
-   and --mist in the classic register) are the ones deck scenes already read with a fallback, so light
-   decks keep their fallback literal and only dark gets a value. Do not add them to :root. */
+   --mist, --solid and --mark-filter) are the ones read with a fallback, so light decks keep their
+   fallback literal and only dark gets a value. Do not add them to :root.
+
+   `color-scheme: dark` is what the inline-figure recolouring in slides.module.css reads, through
+   light-dark(). It is a property rather than a token so a dark theme can set it too.
+
+   Tokens that only a site theme defines get their dark values from that theme, not from here:
+   the engine knows no theme, so it cannot know what a theme's own greys should become. */
 :root[data-color-scheme="dark"] {
   color-scheme: dark;
   --ink: #ecebe7;
@@ -170,9 +194,9 @@
   --line: #3b3e3e;
   --faint: #6c6f6c;
   --on-ink: #141616;
-  --stone: #8f9291;
   --mist: #252828;
-  --graphite: #c9cbc9;
+  /* The mark is a flat black <img> and cannot follow --ink (see .wordmark in slides.module.css). */
+  --mark-filter: invert(1) brightness(0.93);
 
   --card-face: linear-gradient(178deg, #202323 0%, #1d1f1f 60%, #1a1c1c 100%);
   --card-edge: #2e3131;
@@ -193,13 +217,6 @@
     radial-gradient(ellipse 46% 50% at 88% 86%, rgba(244,194,255,0.09), transparent 62%),
     radial-gradient(ellipse 40% 42% at 90% 14%, rgba(255,179,122,0.08), transparent 60%);
 }
-/* Both attributes present outranks either one alone, so the editorial register keeps its bare
-   ground in the dark as well; without this the dark block above, being later, would repaint the
-   wash the editorial register removed. */
-:root[data-color-scheme="dark"][data-deck-theme="editorial"] {
-  --slide-wash: none;
-}
-
 * { box-sizing: border-box; }
 html, body, #root { margin: 0; height: 100%; }
 html, body {

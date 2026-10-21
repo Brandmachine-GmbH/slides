@@ -1,0 +1,40 @@
+/* A theme: a look a whole deck, or a single slide, can be drawn in. `theme: "night"` on a deck
+ * or a slide selects this file; the filename is the name. Delete it or write your own beside it.
+ *
+ * Scope every rule under [data-deck-theme="night"]. The engine sets that attribute on whatever
+ * paints a slide's ground (the stage, each printed page, each thumbnail in the editor), never on
+ * the page as a whole, so a slide in this theme looks the same whichever deck it sits in.
+ * `slides build` refuses a theme file with no rule for its own name.
+ *
+ * Any token in node_modules/@brandmachine/slides/src/engine/tokens.css can be set here. A size
+ * may give a step of the type scale a new value for this theme; it may not add a step, and the
+ * build fails on a raw font-size here as it does everywhere else.
+ *
+ * The presenter's light/dark switch (`d`): a token set here wins in both, and a token left alone
+ * follows the switch. This theme is dark already, so pressing `d` leaves it as it is. A light
+ * theme that wants its own values in the dark adds a second rule, which outranks this one:
+ *   [data-color-scheme="dark"] [data-deck-theme="night"] { ... }
+ *
+ * A dark theme has to set more than its ground and ink, because three things do not follow --ink:
+ * the card material (a light card under light type loses its titles), `color-scheme: dark` (an
+ * inline SVG figure swaps its drawn palette for the tokens on it), and --mark-filter (the logo is
+ * an <img> of a black mark).
+ */
+[data-deck-theme="night"] {
+  --stage-ground: #0b0b0c;
+  --slide-wash: none;
+  --ink: #f4f4f2;
+  --muted: #9a9a96;
+  --copy-ink: #d6d6d2;
+  --note-ink: #a6a6a2;
+  --hairline: #2a2a2a;
+  --surface: #1a1a1b;
+  --solid: #1e1e20;
+  --card-face: linear-gradient(178deg, #1c1c1e 0%, #19191b 60%, #161618 100%);
+  --card-edge: #2c2c2e;
+  --card-edge-low: #242426;
+  color-scheme: dark;
+  --mark-filter: invert(1);
+  --label-color: var(--muted);
+  --chapter-rule: none;
+}

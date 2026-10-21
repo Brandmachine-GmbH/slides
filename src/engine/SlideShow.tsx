@@ -125,7 +125,7 @@ function useMediaPrefetch(srcs: string[]) {
 }
 
 export function SlideShow({ deck }: { deck: Deck }) {
-  const { flat, toc } = useMemo(() => buildSlides(deck), [deck]);
+  const { flat, toc, loose } = useMemo(() => buildSlides(deck), [deck]);
   // The slide this session opens on: 0 for a plain link, 11 for one ending in #12. Read once at
   // mount, because it seeds two things that must agree, the first slide shown and where the media
   // prefetch starts.
@@ -481,8 +481,13 @@ export function SlideShow({ deck }: { deck: Deck }) {
           per-frame software snapshot, and this element escapes that. */}
       <div className={s.viewport} data-vt="stage" onClick={onStageClick}>
         {/* No fit in the className: the effect above owns both the class and the inline
-            style, so the two can never disagree about which mechanism is in use. */}
-        <div className={s.stage} ref={stageRef}>
+            style, so the two can never disagree about which mechanism is in use.
+            The theme rides on the stage because the stage paints the ground (see THEMES in
+            tokens.css). It is a prop rather than an effect on purpose: it then changes in the
+            same commit as `key={i}` below, which `show` flushes inside the view transition's
+            update, so the outgoing snapshot keeps the old ground and no frame ever pairs one
+            slide with the other's ground. An effect would land a commit late. */}
+        <div className={s.stage} ref={stageRef} data-deck-theme={slide.theme}>
           {/* `key={i}` remounts on every slide change, which is what makes the entrance
               animations replay and what stops a mockup or a staged figure carrying its
               revealed state over to the next slide. */}
@@ -490,7 +495,7 @@ export function SlideShow({ deck }: { deck: Deck }) {
             <SlideBody
               key={i}
               slide={slide}
-              deck={deck}
+             
               toc={toc}
               onJump={show}
               onOpenViewer={setViewerAt}
@@ -510,10 +515,11 @@ export function SlideShow({ deck }: { deck: Deck }) {
                 onClose={() => setViewerAt(null)} />
       )}
 
-      <SegNav toc={toc} flatLength={flat.length} current={i} onJump={show} />
+      <SegNav toc={toc} loose={loose} current={i} onJump={show} />
 
       <Toc
         toc={toc}
+        loose={loose}
         current={i}
         open={tocOpen}
         onToggle={() => setTocOpen((o) => !o)}

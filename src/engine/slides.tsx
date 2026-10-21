@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useRef, useState, type ComponentType, type CSSProperties } from "react";
 import type {
-  Deck, TocSection, PlanStep, PlanCost, ViewerImage, StackBlock, SceneProps,
+  TocSection, PlanStep, PlanCost, ViewerImage, StackBlock, SceneProps,
   EmbedProps, Chapter, StoryController,
 } from "./types";
 import DECK_SCENES from "@deck-scenes";
@@ -126,12 +126,12 @@ function FigureBlock({ src, style, controllerRef }: {
   );
 }
 
-export function TitleSlide({ deck, images }: { deck: Deck; images?: string[] }) {
+export function TitleSlide({ eyebrow, headingHtml, sub, images }: { eyebrow: string; headingHtml: string; sub: string; images?: string[] }) {
   const copy = (
     <>
-      <p className={s.eyebrow} data-vt="label">{deck.title.eyebrow}</p>
-      <h1 className={s.titleH1} dangerouslySetInnerHTML={{ __html: deck.title.headingHtml }} />
-      <p className={s.sub}>{deck.title.sub}</p>
+      <p className={s.eyebrow} data-vt="label">{eyebrow}</p>
+      <h1 className={s.titleH1} dangerouslySetInnerHTML={{ __html: headingHtml }} />
+      <p className={s.sub}>{sub}</p>
     </>
   );
   if (!images?.length) {
@@ -158,17 +158,17 @@ export function TitleSlide({ deck, images }: { deck: Deck; images?: string[] }) 
   );
 }
 
-export function AgendaSlide({ deck, toc, onJump }: { deck: Deck; toc: TocSection[]; onJump: (index: number) => void }) {
-  // An appendix (Section.agenda: false) is reachable from the nav but not promised to the room,
+export function TocSlide({ eyebrow, heading, toc, onJump }: { eyebrow: string; heading: string; toc: TocSection[]; onJump: (index: number) => void }) {
+  // An appendix (Section.toc: false) is reachable from the nav but not promised to the room,
   // so it drops out here before the rows are numbered: 01 to 04 stay 01 to 04.
-  const rows = toc.filter((sec) => sec.agenda);
-  // Pictures switch the overview to its second layout, but only when the deck has given them:
+  const rows = toc.filter((sec) => sec.listed);
+  // Pictures switch the toc to its second layout, but only when the deck has given them:
   // a deck without thumbs keeps the card rows it was written against.
   const pictures = rows.some((sec) => sec.thumb);
   const head = (
     <>
-      <p className={s.eyebrow} data-vt="label">{deck.agenda.eyebrow}</p>
-      <h1 className={s.agendaH1}>{deck.agenda.heading}</h1>
+      <p className={s.eyebrow} data-vt="label">{eyebrow}</p>
+      <h1 className={s.agendaH1}>{heading}</h1>
     </>
   );
   if (pictures) {
@@ -503,7 +503,7 @@ const MOCKUPS: Record<string, ComponentType<EmbedProps>> = SITE_MOCKUPS;
 /* Scenes: the engine's own drawings, one lazy chunk each, so a deck that uses none carries none.
    ---------------------------------------------------------------------------------------------
    THE FOLDER IS THE REGISTRY. Dropping a component into scenes/ is the whole registration, and
-   the name a deck writes is the filename in kebab-case: ValueChain.tsx is `scene: "value-chain"`.
+   the name a deck writes is the filename in kebab-case: ValueChain.tsx is `name: "value-chain"`.
    Helpers live in scenes/lib/ and are not scenes, which is why Flow.tsx sits there.
 
    This used to be a hand-written map plus a union in types.ts, so one new drawing meant editing
@@ -542,12 +542,12 @@ const SCENES: Record<string, ComponentType<SceneProps>> = { ...ENGINE_SCENES, ..
  *  It borrows the stack slide's frame on purpose, so the heading over a scene is the same
  *  heading over a drawn `figure` and the two read as one family. Everything below the heading
  *  is the scene's own. */
-export function SceneSlide({ scene, eyebrow, title, note, controllerRef, ...rest }: {
-  scene: string;
+export function SceneSlide({ name, eyebrow, title, note, controllerRef, ...rest }: {
+  name: string;
   eyebrow?: string; title?: string; note?: string;
   controllerRef?: { current: StoryController | null };
 } & Omit<SceneProps, "controllerRef">) {
-  const Scene = SCENES[scene];
+  const Scene = SCENES[name];
   // The build refuses a deck naming a scene that is not there, so this is for the gap between
   // deleting a file and running a build. Loud beats blank: an empty slide in a meeting reads as
   // the deck being broken, a sentence reads as one drawing being missing.
@@ -561,7 +561,7 @@ export function SceneSlide({ scene, eyebrow, title, note, controllerRef, ...rest
           <h2 className={s.stackH2}>
             {__ADMIN__
               ? "Drawn by this deck, not previewed here."
-              : <>No component named &ldquo;{scene}&rdquo;.</>}
+              : <>No component named &ldquo;{name}&rdquo;.</>}
           </h2>
           <p className={s.stackNote}>
             {__ADMIN__
@@ -600,9 +600,9 @@ export function SceneSlide({ scene, eyebrow, title, note, controllerRef, ...rest
  *  say what is on screen before any of it moves. The chapter nav bottom-left says how many
  *  beats there are and which one is running, and each one can be clicked to go back to it when
  *  somebody asks about a step you have already passed. */
-export function MockupSlide({ mockup, eyebrow, title, assets, controllerRef }: {
+export function MockupSlide({ name, eyebrow, title, assets, controllerRef }: {
   /** A key in mockups/index.ts, e.g. "designer". */
-  mockup: string;
+  name: string;
   eyebrow?: string; title?: string; assets: string;
   /** Absent in the PDF export and the admin editor's contact sheet, where the demo is a still.
    *  Its presence is also what says this is being presented, so the nav is drawn only then. */
@@ -614,7 +614,7 @@ export function MockupSlide({ mockup, eyebrow, title, assets, controllerRef }: {
   const [at, setAt] = useState(-1);
   const [chapters, setChapters] = useState<Chapter[]>([]);
 
-  const Embed = MOCKUPS[mockup];
+  const Embed = MOCKUPS[name];
   // The build refuses a deck naming a mockup that is not there, so this covers only the gap
   // between deleting a file and running a build. Same reasoning as the missing-scene card:
   // an empty slide in a meeting reads as the whole deck being broken.
@@ -623,7 +623,7 @@ export function MockupSlide({ mockup, eyebrow, title, assets, controllerRef }: {
       <div className={`${s.slide} ${s.stack}`}>
         <div className={s.stackHead}>
           <p className={s.group}>Missing mockup</p>
-          <h2 className={s.stackH2}>No embed named &ldquo;{mockup}&rdquo;.</h2>
+          <h2 className={s.stackH2}>No embed named &ldquo;{name}&rdquo;.</h2>
           <p className={s.stackNote}>
             Mockups are registered in mockups/index.ts, which maps this name to the
             component that draws it.

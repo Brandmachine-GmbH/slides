@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"] }).toString();
-const step = (msg) => console.log(`— ${msg}`);
+const step = (msg) => console.log(`· ${msg}`);
 
 // ---- the tarball -------------------------------------------------------------------------------
 // npm 11 prints a list with one entry; npm 12 an object keyed by package name. The first
@@ -78,8 +78,10 @@ try {
   // serve imports the generated modules from the site, so it is where the site's package.json
   // "type" decides whether they load at all.
   const port = 8800 + Math.floor(Math.random() * 90);
+  // Its own process group, killed as a group below: `slides serve` runs serve.mjs as a child, and
+  // killing only the parent left that child listening after every check, one more each run.
   const srv = spawn(process.execPath, [join(site, "node_modules", "@brandmachine", "slides", "bin", "slides.mjs"), "serve"],
-    { cwd: site, env: { ...process.env, PORT: String(port) }, stdio: "ignore" });
+    { cwd: site, env: { ...process.env, PORT: String(port) }, stdio: "ignore", detached: true });
   try {
     let status = 0;
     for (let i = 0; i < 40 && status !== 200; i++) {
@@ -88,7 +90,7 @@ try {
     }
     if (status !== 200) throw new Error(`slides serve did not answer /admin (last status ${status})`);
   } finally {
-    srv.kill();
+    try { process.kill(-srv.pid); } catch { /* already gone */ }
   }
   step("slides serve answers /admin");
 

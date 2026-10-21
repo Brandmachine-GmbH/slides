@@ -6,6 +6,9 @@
  *
  * Your own fonts: put the files in fonts/ and declare them here with @font-face, then point the
  * font tokens at them.
+ *
+ * This file is the look of every deck on the site. A look that only some decks or some slides
+ * choose is a theme instead, in themes/ (see themes/night.css).
  */
 :root {
   /* --orange: #ff5500; */

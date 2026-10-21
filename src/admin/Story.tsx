@@ -20,15 +20,15 @@ import s from "./edit.module.css";
 // having two places to do it means two mental models of the same list.
 
 interface Group {
-  /** Index into deck.sections, or null for the title, the overview and the outro. */
+  /** Index into deck.slides of the section, or null for slides that belong to no section. */
   sec: number | null;
   /** The card that is this chapter's divider, if it has one. Its number is the chapter's. */
   divider?: Card;
   rows: Card[];
 }
 
-/** Cards in deck order, cut wherever the section changes. The title and the overview fall out as
- *  a leading group with no chapter, and the outro as a trailing one, which is what they are. */
+/** Cards in deck order, cut wherever the section changes. Slides before the first section fall out as
+ *  a leading group with no chapter, and an end slide after the last section as a trailing one. */
 function group(cards: Card[]): Group[] {
   const out: Group[] = [];
   for (const c of cards) {
@@ -105,7 +105,8 @@ export function Story({
       </div>
 
       {groups.map((g, gi) => {
-        const sec = g.sec === null ? null : deck.sections[g.sec];
+        const item = g.sec === null ? null : deck.slides[g.sec];
+        const sec = item?.type === "section" ? item : null;
         return (
           <div key={gi} className={s.chapter}>
             {sec && (
@@ -120,8 +121,8 @@ export function Story({
                 <AutoText
                   className={s.chJob}
                   placeholder="What this chapter has to do."
-                  value={val(`sections[${g.sec}].job`)}
-                  onChange={(v) => edit(`sections[${g.sec}].job`, v)}
+                  value={val(`slides[${g.sec}].job`)}
+                  onChange={(v) => edit(`slides[${g.sec}].job`, v)}
                 />
               </>
             )}
@@ -137,8 +138,8 @@ export function Story({
                     onChange={(v) => edit(c.jobPath!, v)}
                   />
                 ) : (
-                  // The outro only. Nothing in deck.ts describes that slide, so there is nowhere
-                  // to hang a job, the same reason it can only be unnumbered deck-wide.
+                  // Defensive only: every authored slide has a job path, and a section's divider is
+                  // drawn as the chapter heading above, not as a row.
                   <div className={s.storyNone}>
                     The engine makes this slide, so there is nowhere to write its job.
                   </div>

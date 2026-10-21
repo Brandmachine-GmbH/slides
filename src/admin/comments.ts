@@ -144,8 +144,9 @@ function norm(s: string): string {
 
 // Keys whose strings are never drawn on the slide. `slides` matters most: a divider's path is its
 // section, and without skipping it every string on every slide of that chapter would be a
-// candidate for a click on the divider.
-const UNDRAWN = new Set(["slides", "job", "handout", "passcodes", "id"]);
+// candidate for a click on the divider. `type`, `name` (a scene's or mockup's) and `theme` are
+// identifiers, not copy.
+const UNDRAWN = new Set(["slides", "job", "handout", "passcodes", "id", "type", "name", "theme"]);
 
 function leaves(obj: unknown, path: string, out: { path: string; value: string }[]) {
   if (typeof obj === "string") out.push({ path, value: obj });

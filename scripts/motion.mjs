@@ -79,11 +79,13 @@ if (!boot) {
 }
 void editorHtml;
 
-// The flat slide count, by the same rule buildSlides follows: title, overview when there is more
-// than one section, then per section a divider unless it declines one, its slides, and the outro.
+// The flat slide count, by the same rule buildSlides follows: every top-level slide is one, and
+// a section is its divider (unless it declines one) plus its slides.
 const d = boot.deck;
-let total = 1 + (d.sections.length > 1 ? 1 : 0) + 1;
-for (const sec of d.sections) total += (sec.divider !== false ? 1 : 0) + sec.slides.length;
+let total = 0;
+for (const item of d.slides) {
+  total += item.type === "section" ? (item.divider !== false ? 1 : 0) + item.slides.length : 1;
+}
 
 const port = Number(process.env.PORT) || 8912;
 const srv = spawn(process.execPath, [join(root, "scripts", "serve.mjs")],
@@ -167,7 +169,7 @@ function back(series) {
 }
 
 const findings = [];
-console.log(`\n— motion: ${deckName}, ${total} slides, ${total - 1} transitions\n`);
+console.log(`\n· motion: ${deckName}, ${total} slides, ${total - 1} transitions\n`);
 
 for (let i = 1; i < total; i++) {
   const rows = await page.evaluate(
@@ -231,10 +233,10 @@ for (let i = 1; i < total; i++) {
 
 console.log("");
 if (!findings.length) {
-  console.log(`— nothing over the thresholds (back > ${BACK_PX}px, snap > ${SNAP_PX}px, `
+  console.log(`· nothing over the thresholds (back > ${BACK_PX}px, snap > ${SNAP_PX}px, `
     + `> ${DROP_MAX} dropped frames, any animation starting mid-transition)\n`);
 } else {
-  console.log(`— ${findings.length} transition(s) worth looking at:\n`);
+  console.log(`· ${findings.length} transition(s) worth looking at:\n`);
   for (const f of findings) {
     const why = [];
     if (f.overlapNames.length) {

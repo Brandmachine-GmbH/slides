@@ -29,3 +29,6 @@ netlify/admin.js
 template/dist/
 template/netlify/edge-functions/lib/
 template/decks/*/*.pdf
+
+# Written by `slides` commands in template/: the site names as types, and scratch files.
+template/.slides/

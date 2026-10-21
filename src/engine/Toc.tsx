@@ -1,4 +1,4 @@
-import type { TocSection } from "./types";
+import type { LooseSlide, TocSection } from "./types";
 import type { ColorScheme } from "./colorScheme";
 import s from "./Toc.module.css";
 
@@ -13,6 +13,7 @@ const SUN = <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWid
 
 interface Props {
   toc: TocSection[];
+  loose: LooseSlide[];
   current: number;
   open: boolean;
   onToggle: () => void;
@@ -24,7 +25,7 @@ interface Props {
   onToggleSteps: () => void;
 }
 
-export function Toc({ toc, current, open, onToggle, onClose, onJump, scheme, onToggleScheme, steps, onToggleSteps }: Props) {
+export function Toc({ toc, loose, current, open, onToggle, onClose, onJump, scheme, onToggleScheme, steps, onToggleSteps }: Props) {
   const cls = (base: string, active: boolean) => `${base}${active ? ` ${s.current}` : ""}`;
   return (
     <>
@@ -35,16 +36,22 @@ export function Toc({ toc, current, open, onToggle, onClose, onJump, scheme, onT
       <aside className={`${s.panel} ${open ? s.panelOpen : ""}`} onClick={(e) => e.stopPropagation()}>
         <div className={s.head}>Contents</div>
         <nav className={s.nav}>
-          <button className={cls(`${s.item} ${s.lvl0}`, current === 0)} onClick={() => onJump(0)}>Title</button>
-          {toc.length > 1 && (
-            <button className={cls(`${s.item} ${s.lvl0}`, current === 1)} onClick={() => onJump(1)}>Overview</button>
-          )}
-          {toc.map((sec) => (
-            <div className={s.group} key={sec.dividerIndex}>
-              <button className={cls(`${s.item} ${s.section}`, current === sec.dividerIndex)} onClick={() => onJump(sec.dividerIndex)}>
-                {sec.title}
+          {/* Deck order: the slides that belong to no section as top-level rows, around the
+              section groups. A loose end slide gets no row: it is where the meeting stops, not a
+              place anyone jumps to, which is also why the engine never listed its outro. */}
+          {[
+            ...loose.filter((l) => l.kind !== "end").map((l) => ({ at: l.index, row: l })),
+            ...toc.map((sec) => ({ at: sec.dividerIndex, sec })),
+          ].sort((a, b) => a.at - b.at).map((e) => "row" in e ? (
+            <button key={`l${e.row.index}`} className={cls(`${s.item} ${s.lvl0}`, current === e.row.index)} onClick={() => onJump(e.row.index)}>
+              {e.row.label}
+            </button>
+          ) : (
+            <div className={s.group} key={e.sec.dividerIndex}>
+              <button className={cls(`${s.item} ${s.section}`, current === e.sec.dividerIndex)} onClick={() => onJump(e.sec.dividerIndex)}>
+                {e.sec.title}
               </button>
-              {sec.items.map((it) => (
+              {e.sec.items.map((it) => (
                 <button key={it.index} className={cls(`${s.item} ${s.slide}`, current === it.index)} onClick={() => onJump(it.index)}>
                   {it.label}
                 </button>

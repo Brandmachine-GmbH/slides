@@ -1,6 +1,6 @@
-import type { Deck, FlatSlide, TocSection } from "./types";
+import type { FlatSlide, TocSection } from "./types";
 import type { StoryController } from "./types";
-import { TitleSlide, AgendaSlide, DividerSlide, GroupDividerSlide, ContentSlide, PlanSlide, ShowcaseSlide, ViewerSlide, StackSlide, SceneSlide, MockupSlide, FilmSlide, OutroSlide, SlideNumber } from "./slides";
+import { TitleSlide, TocSlide, DividerSlide, GroupDividerSlide, ContentSlide, PlanSlide, ShowcaseSlide, ViewerSlide, StackSlide, SceneSlide, MockupSlide, FilmSlide, OutroSlide, SlideNumber } from "./slides";
 import { BuildTrack } from "./BuildTrack";
 
 // One flat slide -> the component that draws it. The only place in the codebase that maps a
@@ -14,11 +14,10 @@ import { BuildTrack } from "./BuildTrack";
 //
 // The differences between the three callers are all props, not markup: the live deck wants a
 // viewer that opens and a mockup that can be driven, the PDF and the editor want neither.
-export function SlideBody({ slide, deck, toc, onJump, onOpenViewer, controllerRef }: {
+export function SlideBody({ slide, toc, onJump, onOpenViewer, controllerRef }: {
   slide: FlatSlide;
-  deck: Deck;
   toc: TocSection[];
-  /** the overview's row links. Omitted where there is nowhere to jump to. */
+  /** the table of contents' row links. Omitted where there is nowhere to jump to. */
   onJump?: (i: number) => void;
   /** opens the zoomable inspector. Omitted in the PDF and the editor, where it cannot open. */
   onOpenViewer?: (i: number) => void;
@@ -34,7 +33,7 @@ export function SlideBody({ slide, deck, toc, onJump, onOpenViewer, controllerRe
     // next scene somebody writes. It shows nothing unless something inside reports stages, so
     // the eight kinds that never reveal anything are untouched, and so is every still.
     <BuildTrack>
-      {slideBody({ slide, deck, toc, onJump, onOpenViewer, controllerRef })}
+      {slideBody({ slide, toc, onJump, onOpenViewer, controllerRef })}
       {/* Here rather than inside each slide component, which would be eleven places to forget
           it, and here rather than in SlideShow, which would be the live deck only. The number
           belongs to the slide: it prints, and its value IS the PDF page. */}
@@ -55,9 +54,8 @@ function cornerIsMedia(slide: FlatSlide): boolean {
   return false;
 }
 
-function slideBody({ slide, deck, toc, onJump, onOpenViewer, controllerRef }: {
+function slideBody({ slide, toc, onJump, onOpenViewer, controllerRef }: {
   slide: FlatSlide;
-  deck: Deck;
   toc: TocSection[];
   onJump?: (i: number) => void;
   onOpenViewer?: (i: number) => void;
@@ -65,18 +63,18 @@ function slideBody({ slide, deck, toc, onJump, onOpenViewer, controllerRef }: {
 }) {
   const noop = () => {};
   switch (slide.kind) {
-    case "title":        return <TitleSlide deck={deck} images={slide.images} />;
-    case "agenda":       return <AgendaSlide deck={deck} toc={toc} onJump={onJump ?? noop} />;
-    case "divider":      return <DividerSlide idx={slide.idx} title={slide.title} tagline={slide.tagline} />;
-    case "groupdivider": return <GroupDividerSlide eyebrow={slide.eyebrow} title={slide.title} tagline={slide.tagline} />;
+    case "title":        return <TitleSlide eyebrow={slide.eyebrow} headingHtml={slide.headingHtml} sub={slide.sub} images={slide.images} />;
+    case "toc":          return <TocSlide eyebrow={slide.eyebrow} heading={slide.heading} toc={toc} onJump={onJump ?? noop} />;
+    case "section":      return <DividerSlide idx={slide.idx} title={slide.title} tagline={slide.tagline} />;
+    case "divider":      return <GroupDividerSlide eyebrow={slide.eyebrow} title={slide.title} tagline={slide.tagline} />;
     case "content":      return <ContentSlide eyebrow={slide.eyebrow} headline={slide.headline} paragraph={slide.paragraph} bullets={slide.bullets} src={slide.src} images={slide.images} />;
     case "plan":         return <PlanSlide eyebrow={slide.eyebrow} headline={slide.headline} steps={slide.steps} cost={slide.cost} footnote={slide.footnote} />;
     case "showcase":     return <ShowcaseSlide layout={slide.layout} images={slide.images} eyebrow={slide.eyebrow} title={slide.title} note={slide.note} imageSide={slide.imageSide} focus={slide.focus} />;
     case "viewer":       return <ViewerSlide eyebrow={slide.eyebrow} title={slide.title} note={slide.note} images={slide.images} previews={slide.previews} onOpen={onOpenViewer ?? noop} />;
     case "stack":        return <StackSlide eyebrow={slide.eyebrow} title={slide.title} note={slide.note} blocks={slide.blocks} controllerRef={controllerRef} />;
-    case "scene":        return <SceneSlide scene={slide.scene} eyebrow={slide.eyebrow} title={slide.title} note={slide.note} steps={slide.steps} claim={slide.claim} answer={slide.answer} months={slide.months} controllerRef={controllerRef} />;
-    case "mockup":       return <MockupSlide mockup={slide.mockup} eyebrow={slide.eyebrow} title={slide.title} assets={slide.assets} controllerRef={controllerRef} />;
+    case "scene":        return <SceneSlide name={slide.name} eyebrow={slide.eyebrow} title={slide.title} note={slide.note} steps={slide.steps} claim={slide.claim} answer={slide.answer} months={slide.months} controllerRef={controllerRef} />;
+    case "mockup":       return <MockupSlide name={slide.name} eyebrow={slide.eyebrow} title={slide.title} assets={slide.assets} controllerRef={controllerRef} />;
     case "film":         return <FilmSlide src={slide.src} />;
-    case "outro":        return <OutroSlide />;
+    case "end":          return <OutroSlide />;
   }
 }

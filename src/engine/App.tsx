@@ -3,7 +3,6 @@ import type { Deck } from "./types";
 import { Gate } from "./Gate";
 import { SlideShow } from "./SlideShow";
 import { ExportView } from "./ExportView";
-import { applyDeckTheme } from "./theme";
 
 // Keyed by deck, because localStorage is per-ORIGIN and every deck on a site is served from
 // that one origin. One shared key meant that a client who had ever opened any deck
@@ -14,7 +13,6 @@ import { applyDeckTheme } from "./theme";
 const AUTH_KEY = `bm-deck-auth:${import.meta.env.BASE_URL}`;
 
 export function App({ deck }: { deck: Deck }) {
-  applyDeckTheme(deck);
   // Export/PDF builds render the whole deck as stacked print pages, no gate. __EXPORT__ is
   // replaced at build time (vite.config.ts define); it is false for every live deck build.
   if (__EXPORT__) return <ExportView deck={deck} />;
@@ -27,6 +25,7 @@ export function App({ deck }: { deck: Deck }) {
     return (
       <Gate
         passcodes={deck.passcodes}
+        theme={deck.theme}
         onUnlock={() => {
           try { localStorage.setItem(AUTH_KEY, "1"); } catch { /* ignore */ }
           setAuthed(true);

@@ -48,12 +48,15 @@
 /* The slide is laid out at its real 1280x720 and the drawing scaled down (see Thumb in
    EditApp.tsx for why it is a transform and not zoom), so the line breaks are the deck's own.
    Anchored top left because that is where the transform scales from. Nothing inside is
-   clickable: this is a picture of a slide. The backdrop is the deck's own token, so a thumbnail
-   sits on the ground a client sees. */
+   clickable: this is a picture of a slide. The ground, the backdrop and the ink are the deck's
+   own tokens, so a thumbnail sits on the ground a client sees, in the slide's theme. `color`
+   matters more here than on the live stage: body is the editor's chrome and its colour follows
+   the editor's own dark mode, so type that inherits would otherwise come out in the chrome's. */
 .stage {
   position: absolute; top: 0; left: 0; width: 1280px; height: 720px;
   transform-origin: top left;
-  background: #fff;
+  background: var(--stage-ground);
+  color: var(--ink);
   pointer-events: none; user-select: none;
 }
 .stage::before {

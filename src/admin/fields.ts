@@ -1,4 +1,4 @@
-import type { Deck } from "@engine/types";
+import type { Deck, Slide } from "@engine/types";
 
 // Which strings on a slide are copy, and where each one lives in deck.ts.
 //
@@ -20,14 +20,14 @@ export interface Card {
   origin: number;          // 1-based position in the deck as generated. The payload's identity.
   kind: string;
   label: string;
-  /** Title, overview, section dividers and the outro: the engine puts these where it wants
-   *  them, so they can be retyped but not dragged. */
+  /** A section's divider: the engine puts it at the head of its section, so it can be retyped
+   *  but not dragged. Every other slide is authored and moves freely. */
   fixed: boolean;
   fields: Field[];
-  /** Where the slide itself lives in deck.ts ("sections[1].slides[2]", "title", "agenda",
-   *  "sections[1]" for a divider). The outro has none, since nothing in deck.ts describes it, and
-   *  carries "outro" so a comment placed on it still names something. Comments use this to say
-   *  which slide they are on in the same vocabulary EDIT lines use for fields. */
+  /** Where the slide itself lives in deck.ts ("slides[0]" for a top-level slide,
+   *  "slides[3].slides[2]" for one inside the section at slides[3], "slides[3]" for that
+   *  section's divider). Comments use this to say which slide they are on in the same
+   *  vocabulary EDIT lines use for fields. */
   path: string;
 
   /* Below here is story mode's half of a card. It rides on walkCards rather than getting its own
@@ -35,13 +35,13 @@ export interface Card {
      differently: EditApp checks this list against buildSlides and refuses to render if they
      disagree, and a second walk would sit outside that check. */
 
-  /** Index into deck.sections, or undefined for the title, the overview and the outro. */
+  /** Index into deck.slides of this card's section, or undefined for a slide in no section. */
   sec?: number;
   /** This card is a section's divider. It has no job of its own; the chapter's job is its job,
    *  and story mode draws it as the chapter heading. See Section.job. */
   isDivider?: boolean;
-  /** Where this card's job lives in deck.ts. Absent on a section divider, and on the outro,
-   *  which nothing in deck.ts describes. */
+  /** Where this card's job lives in deck.ts. Absent on a section divider, whose job is its
+   *  chapter's (Section.job). */
   jobPath?: string;
   /** What this slide says on screen today, for the line under its job. Always derived, never
    *  typed: an authored summary is a third copy of the headline and starts rotting the moment
@@ -49,7 +49,7 @@ export interface Card {
   says: string;
 }
 
-/** deck.title.headingHtml carries markup, and story mode wants the sentence. */
+/** A title slide's headingHtml carries markup, and story mode wants the sentence. */
 function plain(html: string): string {
   return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
@@ -120,65 +120,56 @@ function textFields(slide: Record<string, unknown>, base: string): Field[] {
 
 /** Walk the deck the way buildSlides does, so card N describes flat slide N.
  *
- *  buildSlides emits: title, [overview], then per section [divider] + one card per authored
- *  slide, then outro. The per-slide part is strictly one for one, so the only rule this has to
+ *  buildSlides emits each top-level slide as itself and each section as [divider] + its slides,
+ *  and nothing else. The per-slide part is strictly one for one, so the only rule this has to
  *  mirror is whether a section announces itself. EditApp asserts the two lists came out the
  *  same length rather than trusting that. */
 export function walkCards(deck: Deck): Card[] {
   const cards: Card[] = [];
-  cards.push({
-    origin: 0, kind: "title", label: "Title", fixed: true, path: "title",
-    says: plain(deck.title.headingHtml), jobPath: "title.job",
-    fields: [
-      { path: "title.eyebrow", label: "Label", value: deck.title.eyebrow },
-      { path: "title.headingHtml", label: "Headline", value: deck.title.headingHtml, multiline: true },
-      { path: "title.sub", label: "Body", value: deck.title.sub, multiline: true },
-    ],
-  });
-  if (deck.sections.length > 1) {
+  const slide = (sl: Slide, path: string, sec?: number) => {
+    const s = sl as unknown as Record<string, unknown>;
+    const heading = sl.type === "title" ? plain(sl.headingHtml) : sl.type === "toc" ? sl.heading : undefined;
+    // A film carries no type at all and a mockup's heading is the software's, so both would
+    // otherwise show an empty line where every other slide shows what it says.
+    const says = (s.title ?? s.headline ?? heading ?? s.eyebrow ?? "") as string;
     cards.push({
-      origin: 0, kind: "overview", label: "Overview", fixed: true, path: "agenda",
-      says: deck.agenda.heading, jobPath: "agenda.job",
-      fields: [
-        { path: "agenda.eyebrow", label: "Label", value: deck.agenda.eyebrow },
-        { path: "agenda.heading", label: "Headline", value: deck.agenda.heading, multiline: true },
-      ],
+      origin: 0, kind: sl.type,
+      label: says || (sl.type === "end" ? "End slide" : "(untitled)"),
+      // A section's divider is the only slide the engine still places itself; everything else,
+      // the title and the table of contents included, is authored and can be dragged.
+      fixed: false,
+      path, sec,
+      jobPath: `${path}.job`,
+      says,
+      fields:
+        sl.type === "title" ? [
+          { path: `${path}.eyebrow`, label: "Label", value: sl.eyebrow },
+          { path: `${path}.headingHtml`, label: "Headline", value: sl.headingHtml, multiline: true },
+          { path: `${path}.sub`, label: "Body", value: sl.sub, multiline: true },
+        ]
+        : sl.type === "toc" ? [
+          { path: `${path}.eyebrow`, label: "Label", value: sl.eyebrow },
+          { path: `${path}.heading`, label: "Headline", value: sl.heading, multiline: true },
+        ]
+        : textFields(s, path),
     });
-  }
-  deck.sections.forEach((sec, n) => {
-    if (sec.divider !== false) {
+  };
+  deck.slides.forEach((item, n) => {
+    if (item.type !== "section") { slide(item, `slides[${n}]`); return; }
+    if (item.divider !== false) {
       cards.push({
-        origin: 0, kind: "divider", label: `Section: ${sec.short ?? sec.title}`, fixed: true,
-        path: `sections[${n}]`,
-        sec: n, isDivider: true, says: sec.title,
+        origin: 0, kind: "section", label: `Section: ${item.short ?? item.title}`, fixed: true,
+        path: `slides[${n}]`,
+        sec: n, isDivider: true, says: item.title,
         fields: [
-          { path: `sections[${n}].title`, label: "Section title", value: sec.title, multiline: true },
-          { path: `sections[${n}].short`, label: "Short name (nav)", value: sec.short ?? "" },
-          { path: `sections[${n}].tagline`, label: "Tagline", value: sec.tagline, multiline: true },
+          { path: `slides[${n}].title`, label: "Section title", value: item.title, multiline: true },
+          { path: `slides[${n}].short`, label: "Short name (nav)", value: item.short ?? "" },
+          { path: `slides[${n}].tagline`, label: "Tagline", value: item.tagline, multiline: true },
         ],
       });
     }
-    sec.slides.forEach((sl, m) => {
-      const s = sl as unknown as Record<string, unknown>;
-      const kind = ["end", "divider", "plan", "viewer", "mockup", "stack", "scene", "film", "showcase"].find((k) => k in s) ?? "content";
-      cards.push({
-        origin: 0, kind,
-        label: (s.title ?? s.headline ?? s.eyebrow ?? s.group ?? (kind === "end" ? "End slide" : "(untitled)")) as string,
-        fixed: false,
-        path: `sections[${n}].slides[${m}]`,
-        sec: n,
-        jobPath: `sections[${n}].slides[${m}].job`,
-        // A film carries no type at all and a mockup's heading is the software's, so both would
-        // otherwise show an empty line where every other slide shows what it says.
-        says: (s.title ?? s.headline ?? s.eyebrow ?? s.group ?? "") as string,
-        fields: textFields(s, `sections[${n}].slides[${m}]`),
-      });
-    });
+    item.slides.forEach((sl, m) => slide(sl, `slides[${n}].slides[${m}]`, n));
   });
-  // Mirrors buildSlides: the automatic outro only exists when no section placed an end slide.
-  if (!deck.sections.some((sec) => sec.slides.some((sl) => "end" in sl))) {
-    cards.push({ origin: 0, kind: "outro", label: "Outro", fixed: true, path: "outro", says: "", fields: [] });
-  }
   cards.forEach((c, i) => { c.origin = i + 1; });
   return cards;
 }

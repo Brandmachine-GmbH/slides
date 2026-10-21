@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Deck } from "@engine/types";
 import { buildSlides } from "@engine/buildSlides";
 import { SlideBody } from "@engine/SlideBody";
-import { applyDeckTheme } from "@engine/theme";
 import { walkCards, setPath, getPath } from "./fields";
 import { Story } from "./Story";
 import {
@@ -68,7 +67,7 @@ function Lazy({ children, className }: { children: React.ReactNode; className: s
  *  about the one thing it exists to show. A transform leaves the layout at 1280x720 and scales the
  *  drawing, so the wrap is the real one. Same reasoning as TRANSFORM_BELOW in SlideShow.tsx, which is
  *  why that one is 1: no reduction is small enough to be safe. */
-function Thumb({ children, layer }: { children: React.ReactNode; layer?: React.ReactNode }) {
+function Thumb({ children, layer, theme }: { children: React.ReactNode; layer?: React.ReactNode; theme?: string }) {
   const box = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0.235);
   useEffect(() => {
@@ -80,7 +79,9 @@ function Thumb({ children, layer }: { children: React.ReactNode; layer?: React.R
   }, []);
   return (
     <div className={s.thumb} ref={box}>
-      <div className={s.stage} data-stage style={{ transform: `scale(${k})` }}>{children}</div>
+      {/* The slide's theme on its own stage, as in the live deck and the PDF: a sheet of thirty
+          slides is one page, so it has no single theme to give the root (THEMES in tokens.css). */}
+      <div className={s.stage} data-stage data-deck-theme={theme} style={{ transform: `scale(${k})` }}>{children}</div>
       {layer}
     </div>
   );
@@ -92,7 +93,6 @@ export function EditApp({ boot }: { boot: Boot }) {
   const originalCards = useMemo(() => walkCards(original), [original]);
 
   const [deck, setDeck] = useState<Deck>(boot.deck);
-  applyDeckTheme(boot.deck);
   const [order, setOrder] = useState<number[]>(() => originalCards.map((_, i) => i));
   const [cut, setCut] = useState<Set<number>>(new Set());
   const [view, setView] = useState<"sheet" | "rows" | "story">("sheet");
@@ -159,7 +159,7 @@ export function EditApp({ boot }: { boot: Boot }) {
   // the price is a second comparison here, over the same paths the story view writes to.
   const jobPaths = useMemo(() => {
     const p = ["job"];
-    original.sections.forEach((_, n) => p.push(`sections[${n}].job`));
+    original.slides.forEach((item, n) => { if (item.type === "section") p.push(`slides[${n}].job`); });
     originalCards.forEach((c) => { if (c.jobPath) p.push(c.jobPath); });
     return p;
   }, [original, originalCards]);
@@ -427,7 +427,7 @@ export function EditApp({ boot }: { boot: Boot }) {
                         });
                       }}
                     />
-                  }><SlideBody slide={flat[o]} deck={deck} toc={toc} /></Thumb>
+                  } theme={flat[o].theme}><SlideBody slide={flat[o]} toc={toc} /></Thumb>
                 </Lazy>
                 <div className={s.bar}>
                   <span className={s.grip} aria-hidden="true">&#x283f;</span>

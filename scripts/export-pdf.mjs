@@ -1,22 +1,32 @@
 // Export a deck to a vector PDF (one slide per page) using headless Chrome.
 //
-//   node scripts/export-pdf.mjs <deck>        e.g. node scripts/export-pdf.mjs example
+//   node scripts/export-pdf.mjs <deck> [--out <file.pdf>]   e.g. node scripts/export-pdf.mjs example
 //
 // It spins up an ephemeral Vite dev server in export mode (VITE_EXPORT=1 -> stacked print pages,
 // static TTF fonts, no passcode gate), prints the page to PDF with system Chrome, then shuts the
-// server down. Output: decks/<deck>/<deck>.pdf. Nothing is left running.
+// server down. Output: decks/<deck>/<deck>.pdf, or wherever --out says. Nothing is left running.
+//
+// Several of these can run at once in one checkout, which is how decks are verified in parallel:
+// each run takes a free port of its own and keeps Vite's dependency cache in its own temporary
+// folder. Sharing node_modules/.vite was not safe: every deck's config differs, so one run
+// re-optimised the cache under another and reloaded its page halfway through the print.
 import { createServer } from "vite";
 import { chromium } from "playwright-core";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { createServer as createNetServer } from "node:net";
+import { tmpdir } from "node:os";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const userRoot = process.env.SLIDES_ROOT || process.cwd();
-const deckName = process.argv[2];
+const argv = process.argv.slice(2);
+const outAt = argv.indexOf("--out");
+const outArg = outAt >= 0 ? argv[outAt + 1] : undefined;
+const deckName = argv.find((a, i) => !a.startsWith("--") && (outAt < 0 || i !== outAt + 1));
 
-if (!deckName) {
-  console.error("usage: node scripts/export-pdf.mjs <deck>");
+if (!deckName || (outAt >= 0 && !outArg)) {
+  console.error("usage: node scripts/export-pdf.mjs <deck> [--out <file.pdf>]");
   process.exit(1);
 }
 if (!existsSync(join(userRoot, "decks", deckName, "deck.ts"))) {
@@ -34,8 +44,28 @@ process.env.VITE_EXPORT = "1";
 const noNotes = process.env.NOTES === "off";
 process.env.VITE_EXPORT_NO_NOTES = noNotes ? "1" : "";
 
-const server = await createServer({ root, configFile: join(root, "vite.config.ts"), server: { port: 0 } });
-await server.listen();
+/** A port nothing is listening on right now. Asked of the OS rather than counted up from 5173,
+ *  which is what Vite does on its own and which raced when two exports started together. */
+const freePort = () => new Promise((res, rej) => {
+  const srv = createNetServer().once("error", rej).listen(0, "127.0.0.1", () => {
+    const { port } = srv.address();
+    srv.close(() => res(port));
+  });
+});
+
+const cacheDir = mkdtempSync(join(tmpdir(), "slides-export-"));
+process.env.SLIDES_CACHE_DIR = cacheDir;
+let server;
+// The port is free when asked for and can be taken before Vite binds it, so a collision is
+// retried with a fresh one rather than failing the export.
+for (let attempt = 0; !server; attempt++) {
+  const s = await createServer({
+    root, configFile: join(root, "vite.config.ts"), logLevel: "warn",
+    server: { port: await freePort(), strictPort: true, hmr: false },
+  });
+  try { await s.listen(); server = s; }
+  catch (e) { await s.close(); if (attempt >= 4) throw e; }
+}
 const url = server.resolvedUrls.local[0];
 
 const browser = await chromium.launch({ channel: "chrome" }); // headless system Chrome
@@ -148,7 +178,10 @@ try {
   }, { retina: RETINA, quality: JPEG_QUALITY, maxPx: MAX_PX });
   console.log(`images: ${stats.downscaled}/${stats.total} downscaled`, stats.skipped.length ? "| skipped: " + JSON.stringify(stats.skipped) : "");
 
-  const out = join(userRoot, "decks", deckName, `${deckName}${noNotes ? "-no-notes" : ""}.pdf`);
+  const out = outArg
+    ? resolve(outArg)
+    : join(userRoot, "decks", deckName, `${deckName}${noNotes ? "-no-notes" : ""}.pdf`);
+  mkdirSync(dirname(out), { recursive: true });
   await page.pdf({
     path: out,
     preferCSSPageSize: true, // take the 960pt x 540pt page box from the @page rule
@@ -159,4 +192,5 @@ try {
 } finally {
   await browser.close();
   await server.close();
+  rmSync(cacheDir, { recursive: true, force: true });
 }

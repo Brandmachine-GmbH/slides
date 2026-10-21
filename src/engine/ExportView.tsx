@@ -34,8 +34,11 @@ export function ExportView({ deck }: { deck: Deck }) {
       )}
       {flat.map((slide, i) => (
         <div className="bmx-page" key={i}>
-          <div className="bmx-slide">
-            <SlideBody slide={slide} deck={deck} toc={toc} />
+          {/* Each page carries its own slide's theme, because every page is in the document at
+              once and there is no one theme the document could carry (THEMES in tokens.css). On
+              the slide rather than the page, so a handout band under a dark slide stays paper. */}
+          <div className="bmx-slide" data-deck-theme={slide.theme}>
+            <SlideBody slide={slide} toc={toc} />
             {/* A printed page cannot play anything, and a still of a film or a demo reads as the
                 whole of it unless the page says otherwise. So those two kinds say where the
                 moving version is. No URL: the link to a deck is its only lock, and a PDF gets

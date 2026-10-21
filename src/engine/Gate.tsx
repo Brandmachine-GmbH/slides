@@ -7,9 +7,13 @@ const norm = (v: string) => v.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 export function Gate({
   passcodes,
+  theme,
   onUnlock,
 }: {
   passcodes: string[];
+  /** The deck's theme. On the screen itself because no theme is ever set on :root (tokens.css,
+   *  THEMES), and this screen is the first thing of the deck a client sees. */
+  theme?: string;
   onUnlock: () => void;
 }) {
   // A passcode with no Latin letters or digits normalises to "", which an empty submit would
@@ -38,7 +42,7 @@ export function Gate({
     // data-gate names each part for a site's theme.css. The class names are CSS Modules hashes
     // that change between builds, so without these a site could only reach what the tokens
     // reach. Renaming one breaks every site that styles it: treat them as public API.
-    <div className={`${s.gate} ${shake ? s.shake : ""}`} data-gate="screen">
+    <div className={`${s.gate} ${shake ? s.shake : ""}`} data-gate="screen" data-deck-theme={theme}>
       <div className={s.box} data-gate="box">
         {/* The site's brand/logo.svg, or the engine's neutral mark when it has none (the
             @brand-logo alias in vite.config.ts), the same file the slides' wordmark uses. A

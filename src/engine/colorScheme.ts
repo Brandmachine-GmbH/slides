@@ -2,8 +2,8 @@ import { useSyncExternalStore } from "react";
 
 /** The presenter's light/dark switch, and the one place that knows how it is stored and applied.
  *
- *  It is a VIEWER setting, not a deck setting, and that split is deliberate. `Deck.theme` is the
- *  deck's register and is decided when the deck is written; this is decided in the room, by
+ *  It is a VIEWER setting, not a deck setting, and that split is deliberate. A theme (`theme` on
+ *  a deck or a slide) is decided when the deck is written; this is decided in the room, by
  *  whoever is presenting, because the right answer depends on the room (a dark conference hall, a
  *  bright client office) and not on the deck. So it lives in the browser and not in deck.ts, and
  *  nothing about it can change what a client who opens the link sees until they press it.
@@ -33,9 +33,11 @@ export function storeScheme(scheme: ColorScheme) {
   } catch { /* private mode or blocked storage: the switch still works, it just is not remembered */ }
 }
 
-/** On the root, like the deck theme (see theme.ts), because the stage ground and the tokens are
- *  read by ancestors of everything a slide renders. Removed outright for light rather than set to
- *  "light", so a light deck's root is exactly what it was before this existed. */
+/** On the root, because the scheme is one choice for the whole page: the slides, and the nav and
+ *  Contents panel around them, which no theme reaches. A theme sits on each slide's own ground,
+ *  under this, which is what lets a theme's tokens outrank the scheme's (THEMES in tokens.css).
+ *  Removed outright for light rather than set to "light", so a light deck's root is exactly what
+ *  it was before this existed. */
 export function applyColorScheme(scheme: ColorScheme) {
   const root = document.documentElement;
   if (scheme === "dark") root.dataset.colorScheme = "dark";
@@ -62,8 +64,8 @@ export function useColorScheme(): ColorScheme {
 
 /** A token's resolved value, for drawing code that cannot use var(). Read from the element being
  *  drawn into rather than from the root, so a token overridden further down the tree still wins.
- *  Falls back to the literal the drawing used before tokens, which is also what a register that
- *  does not define the token (the classic one has no --mist) should get. */
+ *  Falls back to the literal the drawing used before tokens, which is also what a slide whose
+ *  theme does not define the token (the engine's own look has no --mist in light) should get. */
 export function cssToken(el: Element, name: string, fallback: string): string {
   const v = getComputedStyle(el).getPropertyValue(name).trim();
   return v || fallback;

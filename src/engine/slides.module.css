@@ -2,11 +2,11 @@
 
 .eyebrow {
   font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-label);
-  letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-color); margin: 0 0 14px;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--label-color, var(--orange)); margin: 0 0 14px;
 }
-/* The dot the editorial register puts before a label: the one place orange is still spent on
-   a label, as a mark rather than as the text colour. `content: none` in the default register,
-   so nothing renders at all there. */
+/* The dot a theme can put before a label with --label-mark, for a theme that takes orange out of
+   label text and keeps it only as a mark. `content: none` by default, so nothing renders at all
+   without one. */
 .eyebrow::before, .idx::before, .group::before {
   content: var(--label-mark);
   display: inline-block; width: 6px; height: 6px; border-radius: 50%;
@@ -46,7 +46,7 @@
   transform: translateY(-2px); box-shadow: var(--card-lift-high);
   border-color: rgba(255,85,0,0.5); border-bottom-color: rgba(255,85,0,0.5);
 }
-.agendaNum { font-family: "Playfair Display", serif; font-size: var(--type-subhead); color: var(--label-color); min-width: 46px; }
+.agendaNum { font-family: "Playfair Display", serif; font-size: var(--type-subhead); color: var(--label-color, var(--orange)); min-width: 46px; }
 .agendaText { display: flex; flex-direction: column; gap: 3px; flex: 1; }
 .agendaTitle { font-family: "Playfair Display", serif; font-size: var(--type-body); color: var(--ink); letter-spacing: -0.02em; line-height: 1.05; }
 .agendaTag { font-size: var(--type-label); color: var(--muted); line-height: 1.35; }
@@ -74,12 +74,19 @@
 .agendaThumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s cubic-bezier(.2,.7,.2,1); }
 .agendaPicRow:hover .agendaThumb img { transform: scale(1.04); }
 
-/* divider */
-.divider { display: flex; flex-direction: column; justify-content: center; }
+/* divider: a section's opening slide, and the statement slide a deck places with `divider: true`.
+   --divider-align lets a theme centre both (it is used for align-items and text-align, so
+   `center` is the one value that means the same to each), and --divider-kicker (a `display`
+   value) lets it drop the section kicker, "Section 2" or the section's `short`, for a register
+   where the title alone carries the slide. Both default to exactly what was drawn before. */
+.divider {
+  display: flex; flex-direction: column; justify-content: center;
+  align-items: var(--divider-align, normal); text-align: var(--divider-align, start);
+}
 /* Matches .eyebrow exactly. A section divider's kicker and a slide's eyebrow are the same
    thing (a small label above a headline) and used to be styled differently, grey sentence case
    against orange uppercase, which read as an inconsistency rather than a distinction. */
-.idx { font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-label); color: var(--label-color); letter-spacing: 0.14em; text-transform: uppercase; }
+.idx { display: var(--divider-kicker, block); font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-label); color: var(--label-color, var(--orange)); letter-spacing: 0.14em; text-transform: uppercase; }
 .dividerH1 { font-size: var(--type-display); margin-top: 12px; }
 .tagline { margin-top: 20px; font-size: var(--type-body); color: var(--muted); max-width: 660px; line-height: 1.5; }
 .rule { display: var(--chapter-rule); width: 88px; height: 5px; background: var(--orange); border-radius: 4px; margin-top: 36px; }
@@ -92,7 +99,7 @@
 }
 .video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .copy { max-width: 560px; }
-.group { font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-label); letter-spacing: 0.13em; text-transform: uppercase; color: var(--label-color); margin: 0 0 14px; }
+.group { font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-label); letter-spacing: 0.13em; text-transform: uppercase; color: var(--label-color, var(--orange)); margin: 0 0 14px; }
 .contentH2 { font-size: var(--type-headline); line-height: 1.12; }
 .copyP { margin: 20px 0 0; font-size: var(--type-body); line-height: 1.55; color: var(--copy-ink); }
 
@@ -140,12 +147,12 @@
   transform: translateY(-3px); box-shadow: var(--card-lift-high);
   border-color: rgba(255,85,0,0.45); border-bottom-color: rgba(255,85,0,0.45);
 }
-.planTag { font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-label); letter-spacing: 0.1em; text-transform: uppercase; color: var(--label-color); margin: 0 0 12px; }
+.planTag { font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-label); letter-spacing: 0.1em; text-transform: uppercase; color: var(--label-color, var(--orange)); margin: 0 0 12px; }
 .planCardTitle { font-family: "Playfair Display", serif; font-size: var(--type-subhead); letter-spacing: -0.02em; line-height: 1.05; color: var(--ink); margin: 0; }
 .planNote { margin: 10px 0 0; font-size: var(--type-note); line-height: 1.45; color: var(--note-ink); }
 .planCost {
   margin-top: 22px; display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap;
-  background: var(--solid); border-radius: 16px; padding: 20px 28px;
+  background: var(--solid, var(--ink)); border-radius: 16px; padding: 20px 28px;
 }
 .planFigure { font-family: "Playfair Display", serif; font-size: var(--type-headline); line-height: 1; letter-spacing: -0.02em; color: var(--orange); }
 .planCaption { font-family: "Inter", sans-serif; font-size: var(--type-note); color: rgba(255,255,255,0.72); }
@@ -187,19 +194,35 @@
 .showFull .showFrame { flex: 1 1 0; min-width: 0; }
 /* The caption sits on a glass card rather than a gradient scrim. A scrim that is subtle enough
    for the dark campaign shots disappears on the near-white studio shots, and the card also keeps
-   the text off the seam between two duo images. Same glass as the nav (SegNav.module.css). */
+   the text off the seam between two duo images. Same glass as the nav (SegNav.module.css).
+
+   That is the default and every deck without a theme keeps it. A theme can trade the card for
+   type set straight on the picture, through the --caption-* tokens below, each read with the
+   card's own value as its fallback: no card (ground, blur, edge and lift to none), its own inset,
+   width and padding, a scrim over the picture (--caption-scrim, on the media so it sits under the
+   caption and over every frame), and a bigger title (--type-show-caption, which names a step of
+   the scale the way --type-stack-head does). A theme that does this takes on what the card was
+   protecting against: its scrim has to be strong enough for its lightest picture, and its title
+   will cross the seam of a two-image slide. */
+.showFull .showMedia::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: var(--caption-scrim, none);
+}
 .showCaption {
-  position: absolute; left: 48px; bottom: 48px; z-index: 2; width: 452px;
-  background: rgba(14,14,18,0.68); -webkit-backdrop-filter: blur(22px) saturate(150%); backdrop-filter: blur(22px) saturate(150%);
-  border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 24px 28px 26px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.34);
+  position: absolute; left: var(--caption-inset, 48px); bottom: var(--caption-inset, 48px); z-index: 2;
+  width: var(--caption-width, 452px);
+  background: var(--caption-ground, rgba(14,14,18,0.68));
+  -webkit-backdrop-filter: var(--caption-blur, blur(22px) saturate(150%)); backdrop-filter: var(--caption-blur, blur(22px) saturate(150%));
+  border: var(--caption-edge, 1px solid rgba(255,255,255,0.12)); border-radius: 20px;
+  padding: var(--caption-padding, 24px 28px 26px);
+  box-shadow: var(--caption-lift, 0 20px 50px rgba(0,0,0,0.34));
   animation: showCopyIn 0.4s cubic-bezier(.16,.84,.44,1) both; animation-delay: 0.16s;
 }
 .showCaptionEyebrow {
   font-family: "Inter", sans-serif; font-weight: 600; font-size: var(--type-label); letter-spacing: 0.13em;
   text-transform: uppercase; color: var(--orange); margin: 0 0 10px;
 }
-.showCaptionH2 { font-size: var(--type-subhead); line-height: 1.1; color: #fff; }
+.showCaptionH2 { font-size: var(--type-show-caption, var(--type-subhead)); line-height: 1.1; color: #fff; }
 .showCaptionNote { margin: 12px 0 0; font-size: var(--type-note); line-height: 1.5; color: rgba(255,255,255,0.78); }
 
 /* stack: a heading over full-width blocks, for evidence that is wider than it is tall.
@@ -209,7 +232,7 @@
    inside that. A slide can be over-written but it cannot overflow. */
 .stack { padding: 42px 72px; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
 .stackHead { flex: none; animation: showCopyIn 0.34s cubic-bezier(.16,.84,.44,1) both; }
-.stackH2 { font-size: var(--type-stack-head); line-height: 1.1; }
+.stackH2 { font-size: var(--type-stack-head, var(--type-title)); line-height: 1.1; }
 .stackNote { margin: 12px 0 0; font-size: var(--type-body); line-height: 1.5; color: var(--copy-ink); max-width: 1000px; }
 .stackBlock { flex: none; min-height: 0; animation: showFrameIn 0.46s ease-out both; }
 
@@ -294,24 +317,49 @@
    sets Playfair once on a group had every label quietly forced back to Inter. Injected SVG
    already inherits the page's Inter as its default, so the rule bought nothing. */
 
-/* A figure in the dark scheme. Figures are drawn files with the STYLE.md palette baked in, as
+/* A figure on a dark ground. Figures are drawn files with the STYLE.md palette baked in, as
    presentation attributes and as inline `style`, and a drawn file cannot read a token. Left
-   alone, their #181b1b headings and logos go black on a black ground. So the dark scheme remaps
+   alone, their #181b1b headings and logos go black on a black ground. So a dark ground remaps
    exactly that palette onto the tokens, and nothing else: an authored colour outside it (a
    client's own logo colour, orange) is left as drawn. The `style*=` rules need !important
    because an inline style beats any selector; the attribute ones do not, since a presentation
    attribute loses to any stylesheet rule. Keep this list to the palette in STYLE.md, or it
-   starts repainting drawings nobody has looked at in the dark. */
-:global(:root[data-color-scheme="dark"]) .stackFigure :is([fill="#181b1b" i], [fill="#000" i], [fill="#000000" i]) { fill: var(--ink); }
-:global(:root[data-color-scheme="dark"]) .stackFigure [stroke="#181b1b" i] { stroke: var(--ink); }
-:global(:root[data-color-scheme="dark"]) .stackFigure :is([stroke="#b8b2a9" i], [stroke="#c3bdb4" i], [stroke="#c9c3ba" i], [stroke="#ded8d0" i]) { stroke: var(--line); }
-:global(:root[data-color-scheme="dark"]) .stackFigure [style*="fill:#181b1b" i] { fill: var(--ink) !important; }
-:global(:root[data-color-scheme="dark"]) .stackFigure [style*="stroke:#181b1b" i] { stroke: var(--ink) !important; }
-:global(:root[data-color-scheme="dark"]) .stackFigure [style*="fill:#5d574e" i] { fill: var(--slide-muted) !important; }
-:global(:root[data-color-scheme="dark"]) .stackFigure :is([style*="fill:#8d867d" i], [style*="fill:#9a938a" i], [style*="fill:#6d675f" i]) { fill: var(--muted) !important; }
-:global(:root[data-color-scheme="dark"]) .stackFigure :is([style*="fill:#ffffff" i], [style*="fill:#fff;" i]) { fill: var(--surface) !important; }
-:global(:root[data-color-scheme="dark"]) .stackFigure [style*="fill:#efece7" i] { fill: var(--mist) !important; }
-:global(:root[data-color-scheme="dark"]) .stackFigure :is([style*="stroke:#c9c3ba" i], [style*="stroke:#c3bdb4" i], [style*="stroke:#ded8d0" i], [style*="stroke:#ddd8d1" i], [style*="stroke:#d8d2ca" i]) { stroke: var(--line) !important; }
+   starts repainting drawings nobody has looked at in the dark.
+
+   "A dark ground" is the element's used `color-scheme`, read by light-dark(): the presenter's
+   dark switch sets it on :root (tokens.css), and a theme that is dark sets it on its own slide.
+   These rules used to be keyed to :root[data-color-scheme="dark"], which no theme can reach,
+   so a dark theme in light mode drew black figures on black. The light branch is each rule's
+   own literal, which is why there is one rule per colour rather than one per token: on a light
+   ground every figure keeps exactly the colour it was drawn in.
+
+   Every var() here carries that literal as its fallback, and it is not optional. light-dark()
+   resolves both branches, so a token undefined in light (--mist, --line, --slide-muted are
+   dark-only) made the whole declaration invalid on a light ground, and an invalid `fill`
+   inherits: a pill drawn #efece7 inside a group filled #6d675f came out #6d675f, with its
+   label the same colour on top. */
+.stackFigure [fill="#181b1b" i] { fill: light-dark(#181b1b, var(--ink, #181b1b)); }
+.stackFigure [fill="#000" i] { fill: light-dark(#000, var(--ink, #000)); }
+.stackFigure [fill="#000000" i] { fill: light-dark(#000000, var(--ink, #000000)); }
+.stackFigure [stroke="#181b1b" i] { stroke: light-dark(#181b1b, var(--ink, #181b1b)); }
+.stackFigure [stroke="#b8b2a9" i] { stroke: light-dark(#b8b2a9, var(--line, #b8b2a9)); }
+.stackFigure [stroke="#c3bdb4" i] { stroke: light-dark(#c3bdb4, var(--line, #c3bdb4)); }
+.stackFigure [stroke="#c9c3ba" i] { stroke: light-dark(#c9c3ba, var(--line, #c9c3ba)); }
+.stackFigure [stroke="#ded8d0" i] { stroke: light-dark(#ded8d0, var(--line, #ded8d0)); }
+.stackFigure [style*="fill:#181b1b" i] { fill: light-dark(#181b1b, var(--ink, #181b1b)) !important; }
+.stackFigure [style*="stroke:#181b1b" i] { stroke: light-dark(#181b1b, var(--ink, #181b1b)) !important; }
+.stackFigure [style*="fill:#5d574e" i] { fill: light-dark(#5d574e, var(--slide-muted, #5d574e)) !important; }
+.stackFigure [style*="fill:#8d867d" i] { fill: light-dark(#8d867d, var(--muted, #8d867d)) !important; }
+.stackFigure [style*="fill:#9a938a" i] { fill: light-dark(#9a938a, var(--muted, #9a938a)) !important; }
+.stackFigure [style*="fill:#6d675f" i] { fill: light-dark(#6d675f, var(--muted, #6d675f)) !important; }
+.stackFigure [style*="fill:#ffffff" i] { fill: light-dark(#ffffff, var(--surface, #ffffff)) !important; }
+.stackFigure [style*="fill:#fff;" i] { fill: light-dark(#fff, var(--surface, #fff)) !important; }
+.stackFigure [style*="fill:#efece7" i] { fill: light-dark(#efece7, var(--mist, #efece7)) !important; }
+.stackFigure [style*="stroke:#c9c3ba" i] { stroke: light-dark(#c9c3ba, var(--line, #c9c3ba)) !important; }
+.stackFigure [style*="stroke:#c3bdb4" i] { stroke: light-dark(#c3bdb4, var(--line, #c3bdb4)) !important; }
+.stackFigure [style*="stroke:#ded8d0" i] { stroke: light-dark(#ded8d0, var(--line, #ded8d0)) !important; }
+.stackFigure [style*="stroke:#ddd8d1" i] { stroke: light-dark(#ddd8d1, var(--line, #ddd8d1)) !important; }
+.stackFigure [style*="stroke:#d8d2ca" i] { stroke: light-dark(#d8d2ca, var(--line, #d8d2ca)) !important; }
 
 .stackTiles { display: grid; gap: 22px; }
 .stackTile { border-top: 2px solid var(--hairline); padding-top: 12px; }
@@ -561,13 +609,15 @@
 .film { padding: 0; overflow: hidden; }
 .filmVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* The mark in the dark scheme. It arrives as an <img> of brand/logo.svg, which is one flat black
-   shape, so it cannot follow --ink and would vanish into the ground. Inverting it lands on about
-   the ink's off-white. This is the one filter the dark scheme applies, and it is safe only
-   because the mark is monochrome: a brand whose logo carries colour needs a light variant of
-   the file instead, since an inversion would turn its colours into their opposites. */
-:global(:root[data-color-scheme="dark"]) .wordmark,
-:global(:root[data-color-scheme="dark"]) .mark img { filter: invert(1) brightness(0.93); }
+/* The mark on a dark ground. It arrives as an <img> of brand/logo.svg, which is one flat black
+   shape, so it cannot follow --ink and would vanish into the ground. --mark-filter is set by the
+   dark scheme (tokens.css) and by any theme whose ground is dark, and inverting lands on about
+   the ink's off-white. A token rather than a rule keyed to :root[data-color-scheme], because a
+   theme sits on the slide and cannot reach that selector: a dark theme in light mode drew a
+   black mark on black. Safe only because the mark is monochrome: a brand whose logo carries
+   colour needs a light variant of the file instead, since an inversion would turn its colours
+   into their opposites. */
+.wordmark, .mark img { filter: var(--mark-filter, none); }
 
 /* outro */
 .outro { display: flex; align-items: center; justify-content: center; }

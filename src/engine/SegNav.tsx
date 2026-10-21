@@ -1,22 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useCoarsePointer } from "./useCoarsePointer";
-import type { TocSection } from "./types";
+import type { LooseSlide, TocSection } from "./types";
 import s from "./SegNav.module.css";
 
 interface Tick { index: number; label: string; }
 interface Segment { label: string; firstIndex: number; ticks: Tick[]; }
 
-function buildSegments(toc: TocSection[], flatLength: number): Segment[] {
-  const segs: Segment[] = [
-    // One tick per slide that exists. buildSlides only emits an overview when a deck has more
-    // than one section, so on a single-section deck slide 1 is that section's first slide and
-    // a fixed "Overview" tick here would point at it under the wrong name.
-    { label: "Intro", firstIndex: 0, ticks:
-      toc.length > 1
-        ? [{ index: 0, label: "Title" }, { index: 1, label: "Overview" }]
-        : [{ index: 0, label: "Title" }] },
-  ];
-  toc.forEach((sec) => {
+/** Segments in deck order: each section, and each run of loose slides between them (LooseSlide).
+ *
+ *  A run before the first section is "Intro" and a run after the last is "Outro", which is what
+ *  the title and the end slide were called when the engine placed them itself; a run between two
+ *  sections is named after its first slide. An end slide's tick reads "Thank you", the word the
+ *  room sees it as. */
+function buildSegments(toc: TocSection[], loose: LooseSlide[]): Segment[] {
+  type Entry = { at: number; seg: Segment; run: boolean };
+  const entries: Entry[] = toc.map((sec) => {
     // A section with `divider: false` has no divider slide of its own, so buildSlides points
     // its dividerIndex at its FIRST SLIDE instead. Without this, that slide gets two ticks: one
     // standing for the section and one for itself. React saw two children keyed `2` and the bar
@@ -30,31 +28,31 @@ function buildSegments(toc: TocSection[], flatLength: number): Segment[] {
       seen.add(t.index);
       return true;
     });
-    segs.push({
-      // The bar is a single line that sizes itself to fit every section title, so a title
-      // written as a whole sentence stretches it across the screen for the whole meeting.
-      // `short` is the deck's answer. The hover tooltip and the Contents panel keep the title.
-      label: sec.short ?? sec.title,
-      firstIndex: sec.dividerIndex,
-      ticks,
-    });
+    // The bar is a single line that sizes itself to fit every section title, so a title
+    // written as a whole sentence stretches it across the screen for the whole meeting.
+    // `short` is the deck's answer. The hover tooltip and the Contents panel keep the title.
+    return { at: sec.dividerIndex, run: false, seg: { label: sec.short ?? sec.title, firstIndex: sec.dividerIndex, ticks } };
   });
-  // Only the automatic outro needs a segment of its own. A placed end slide is an item of the
-  // section it sits in, so it already has a tick there, and the last slide of the deck is then
-  // the appendix's, which must not be relabelled "Thank you".
-  const lastIsOwned = toc.some((sec) =>
-    sec.dividerIndex === flatLength - 1 || sec.items.some((it) => it.index === flatLength - 1));
-  if (!lastIsOwned) {
-    segs.push({ label: "Outro", firstIndex: flatLength - 1, ticks: [
-      { index: flatLength - 1, label: "Thank you" },
-    ] });
+  for (const l of loose) {
+    const tick = { index: l.index, label: l.kind === "end" ? "Thank you" : l.label };
+    const prev = entries.filter((e) => e.run).find((e) => e.seg.ticks[e.seg.ticks.length - 1].index === l.index - 1);
+    if (prev) prev.seg.ticks.push(tick);
+    else entries.push({ at: l.index, run: true, seg: { label: l.label, firstIndex: l.index, ticks: [tick] } });
   }
-  return segs;
+  entries.sort((a, b) => a.at - b.at);
+  const firstSection = entries.findIndex((e) => !e.run);
+  const lastSection = entries.length - 1 - [...entries].reverse().findIndex((e) => !e.run);
+  entries.forEach((e, i) => {
+    if (!e.run || firstSection === -1) return;
+    if (i < firstSection) e.seg.label = "Intro";
+    else if (i > lastSection) e.seg.label = "Outro";
+  });
+  return entries.map((e) => e.seg);
 }
 
 interface Props {
   toc: TocSection[];
-  flatLength: number;
+  loose: LooseSlide[];
   current: number;
   onJump: (index: number) => void;
 }
@@ -62,7 +60,7 @@ interface Props {
 /** How close to the bottom edge the pointer has to come before the bar appears. */
 const REVEAL_ZONE = 150;
 
-export function SegNav({ toc, flatLength, current, onJump }: Props) {
+export function SegNav({ toc, loose, current, onJump }: Props) {
   // The bar is a presenter's control, not part of the slide, so on a desktop it stays out of
   // the way until the pointer goes looking for it. Touch devices have no hover and no pointer
   // to track, so there it is simply always there.
@@ -82,7 +80,7 @@ export function SegNav({ toc, flatLength, current, onJump }: Props) {
     };
   }, [coarse]);
   const shown = coarse || near;
-  const segs = useMemo(() => buildSegments(toc, flatLength), [toc, flatLength]);
+  const segs = useMemo(() => buildSegments(toc, loose), [toc, loose]);
   const barRef = useRef<HTMLElement>(null);
   const activeRef = useRef<HTMLDivElement>(null);
 
