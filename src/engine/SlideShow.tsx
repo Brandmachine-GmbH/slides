@@ -8,7 +8,8 @@ import { useCoarsePointer } from "./useCoarsePointer";
 import { SlideBody } from "./SlideBody";
 import type { StoryController } from "./types";
 import { Viewer } from "./Viewer";
-import { applyColorScheme, readStoredScheme, storeScheme, type ColorScheme } from "./colorScheme";
+import { applyColorScheme, readStoredFlip, storeFlip } from "./colorScheme";
+import { baseGround, groundOf } from "./ground";
 import { readStoredSteps, storeSteps, StepsCtx } from "./buildSteps";
 import s from "./SlideShow.module.css";
 import "./transitions.css";
@@ -169,20 +170,23 @@ export function SlideShow({ deck }: { deck: Deck }) {
   const stepRef = useRef<StoryController | null>(null);
   const touch = useCoarsePointer();
   const stageRef = useRef<HTMLDivElement>(null);
-  // Light or dark, chosen by whoever is presenting and remembered per deck (see colorScheme.ts).
-  const [scheme, setScheme] = useState<ColorScheme>(readStoredScheme);
+  // Whether this presenter has flipped the deck to its other ground, remembered per deck (see
+  // colorScheme.ts), and the ground that makes for the slide on screen (ground.ts).
+  const [flipped, setFlipped] = useState<boolean>(() => readStoredFlip(baseGround(deck.theme)));
+  const ground = groundOf(flat[i].ground, flipped);
   // Before paint, so a presenter who left a deck dark does not get one white frame on reopening.
-  // The cleanup takes it off again, which matters only for a host that unmounts the slideshow and
-  // keeps the page, but costs nothing and means the attribute never outlives the thing that set it.
+  // A layout effect also runs inside the commit `show` flushes for the view transition, so on a
+  // mixed deck the root's ground changes in the same frame as the slide, never a frame late. The
+  // cleanup takes it off again, which matters only for a host that unmounts the slideshow and
+  // keeps the page, but costs nothing and means the attribute never outlives what set it.
   useLayoutEffect(() => {
-    applyColorScheme(scheme);
+    applyColorScheme(ground);
     return () => applyColorScheme("light");
-  }, [scheme]);
+  }, [ground]);
   const toggleScheme = useCallback(() => {
-    setScheme((cur) => {
-      const next = cur === "dark" ? "light" : "dark";
-      storeScheme(next);
-      return next;
+    setFlipped((cur) => {
+      storeFlip(!cur);
+      return !cur;
     });
   }, []);
   // Whether staged slides play beat by beat, remembered across every deck (see buildSteps.ts).
@@ -482,12 +486,12 @@ export function SlideShow({ deck }: { deck: Deck }) {
       <div className={s.viewport} data-vt="stage" onClick={onStageClick}>
         {/* No fit in the className: the effect above owns both the class and the inline
             style, so the two can never disagree about which mechanism is in use.
-            The theme rides on the stage because the stage paints the ground (see THEMES in
-            tokens.css). It is a prop rather than an effect on purpose: it then changes in the
+            The theme and its ground ride on the stage because the stage paints the ground (see
+            THEMES in tokens.css, and ground.ts). Props rather than an effect on purpose: they change in the
             same commit as `key={i}` below, which `show` flushes inside the view transition's
             update, so the outgoing snapshot keeps the old ground and no frame ever pairs one
             slide with the other's ground. An effect would land a commit late. */}
-        <div className={s.stage} ref={stageRef} data-deck-theme={slide.theme}>
+        <div className={s.stage} ref={stageRef} data-deck-theme={slide.theme} data-color-scheme={ground}>
           {/* `key={i}` remounts on every slide change, which is what makes the entrance
               animations replay and what stops a mockup or a staged figure carrying its
               revealed state over to the next slide. */}
@@ -525,7 +529,7 @@ export function SlideShow({ deck }: { deck: Deck }) {
         onToggle={() => setTocOpen((o) => !o)}
         onClose={() => setTocOpen(false)}
         onJump={(idx) => show(idx, () => setTocOpen(false))}
-        scheme={scheme}
+        scheme={ground}
         onToggleScheme={toggleScheme}
         steps={steps}
         onToggleSteps={toggleSteps}

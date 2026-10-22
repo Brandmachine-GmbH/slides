@@ -632,6 +632,8 @@ export type FlatSlide = FlatSlideBody & {
    *  the engine's own look. Resolved once in buildSlides so the three renderers cannot disagree
    *  about which slide gets which. */
   theme?: string;
+  /** The ground this slide's theme is designed on, before the presenter's switch (ground.ts). */
+  ground: "light" | "dark";
 };
 
 /** `kind` is the authored `type`, plus "section" for the divider a section generates. */

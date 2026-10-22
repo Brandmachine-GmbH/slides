@@ -24,7 +24,9 @@ const HELP = `slides <command>
   dev <deck>           serve one deck at localhost:5173, reloading as you edit (warns on errors)
   build                check every deck, then build all of them into dist/ with /admin
   serve [--build]      the built site at localhost:8888, /admin included, no password
-  pdf <deck> [--out f] check the deck, then a vector PDF at decks/<deck>/<deck>.pdf (or f)
+  pdf <deck> [--out f] [--scheme light|dark]
+                       check the deck, then a vector PDF at decks/<deck>/<deck>.pdf (or f);
+                       --scheme prints every slide on that ground
   motion <deck>        build, then measure every transition in a deck for jumps
   migrate <deck|file>  rewrite a 0.1 deck.ts into the 0.2 shape, in place, comments kept
   verify [url]         check a deployed site: the gate, the headers, the neutral root
@@ -154,10 +156,15 @@ switch (cmd) {
   case "pdf": {
     const deck = deckArg();
     const at = args.indexOf("--out");
-    if (at >= 0 && !args[at + 1]) fail("usage: slides pdf <deck> [--out <file.pdf>]");
+    const sc = args.indexOf("--scheme");
+    const usage = "usage: slides pdf <deck> [--out <file.pdf>] [--scheme light|dark]";
+    if (at >= 0 && !args[at + 1]) fail(usage);
+    if (sc >= 0 && !["light", "dark"].includes(args[sc + 1])) fail(usage);
     run("scripts/check.mjs", [deck]);
     // Resolved against the site, not against the package the script runs in.
-    run("scripts/export-pdf.mjs", [deck, ...(at >= 0 ? ["--out", resolve(site, args[at + 1])] : [])]);
+    run("scripts/export-pdf.mjs", [deck,
+      ...(at >= 0 ? ["--out", resolve(site, args[at + 1])] : []),
+      ...(sc >= 0 ? ["--scheme", args[sc + 1]] : [])]);
     break;
   }
 

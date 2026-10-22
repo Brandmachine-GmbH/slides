@@ -67,7 +67,7 @@ function Lazy({ children, className }: { children: React.ReactNode; className: s
  *  about the one thing it exists to show. A transform leaves the layout at 1280x720 and scales the
  *  drawing, so the wrap is the real one. Same reasoning as TRANSFORM_BELOW in SlideShow.tsx, which is
  *  why that one is 1: no reduction is small enough to be safe. */
-function Thumb({ children, layer, theme }: { children: React.ReactNode; layer?: React.ReactNode; theme?: string }) {
+function Thumb({ children, layer, theme, ground }: { children: React.ReactNode; layer?: React.ReactNode; theme?: string; ground: "light" | "dark" }) {
   const box = useRef<HTMLDivElement>(null);
   const [k, setK] = useState(0.235);
   useEffect(() => {
@@ -79,9 +79,10 @@ function Thumb({ children, layer, theme }: { children: React.ReactNode; layer?: 
   }, []);
   return (
     <div className={s.thumb} ref={box}>
-      {/* The slide's theme on its own stage, as in the live deck and the PDF: a sheet of thirty
-          slides is one page, so it has no single theme to give the root (THEMES in tokens.css). */}
-      <div className={s.stage} data-stage data-deck-theme={theme} style={{ transform: `scale(${k})` }}>{children}</div>
+      {/* The slide's theme and its ground on its own stage, as in the live deck and the PDF: a
+          sheet of thirty slides is one page, so it has no single theme to give the root (THEMES
+          in tokens.css). The ground is the theme's own; the presenter's switch is not here. */}
+      <div className={s.stage} data-stage data-deck-theme={theme} data-color-scheme={ground} style={{ transform: `scale(${k})` }}>{children}</div>
       {layer}
     </div>
   );
@@ -427,7 +428,7 @@ export function EditApp({ boot }: { boot: Boot }) {
                         });
                       }}
                     />
-                  } theme={flat[o].theme}><SlideBody slide={flat[o]} toc={toc} /></Thumb>
+                  } theme={flat[o].theme} ground={flat[o].ground}><SlideBody slide={flat[o]} toc={toc} /></Thumb>
                 </Lazy>
                 <div className={s.bar}>
                   <span className={s.grip} aria-hidden="true">&#x283f;</span>

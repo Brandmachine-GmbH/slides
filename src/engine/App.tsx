@@ -3,6 +3,8 @@ import type { Deck } from "./types";
 import { Gate } from "./Gate";
 import { SlideShow } from "./SlideShow";
 import { ExportView } from "./ExportView";
+import { readStoredFlip } from "./colorScheme";
+import { baseGround } from "./ground";
 
 // Keyed by deck, because localStorage is per-ORIGIN and every deck on a site is served from
 // that one origin. One shared key meant that a client who had ever opened any deck
@@ -26,6 +28,11 @@ export function App({ deck }: { deck: Deck }) {
       <Gate
         passcodes={deck.passcodes}
         theme={deck.theme}
+        // The passcode screen has only ever been drawn light, and a light deck keeps it that way
+        // whatever the presenter chose. A dark-first theme's screen is dark, and turns to the
+        // theme's light variant for a viewer who flipped the deck: that variant is its light
+        // version, the one the screen was designed in.
+        ground={baseGround(deck.theme) === "dark" && readStoredFlip("dark") ? "light" : baseGround(deck.theme)}
         onUnlock={() => {
           try { localStorage.setItem(AUTH_KEY, "1"); } catch { /* ignore */ }
           setAuthed(true);

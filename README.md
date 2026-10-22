@@ -30,7 +30,7 @@ lockfile that `npm ci` and Netlify's deploy both refuse. `npx slides` on its own
 | `slides dev <deck>` | serve one deck, reloading as you edit; prints the deck's type errors as warnings |
 | `slides build` | check every deck, then build all of them into `dist/` with the `/admin` index and editor |
 | `slides serve [--build]` | the built site at localhost:8888, `/admin` included, no password |
-| `slides pdf <deck> [--out f]` | check the deck, then a vector PDF leave-behind (needs Google Chrome); exports can run in parallel |
+| `slides pdf <deck> [--out f] [--scheme light\|dark]` | check the deck, then a vector PDF leave-behind (needs Google Chrome); `--scheme` prints every slide on one ground; exports can run in parallel |
 | `slides motion <deck>` | measures every transition in a deck for jumps (needs Google Chrome) |
 | `slides migrate <deck>` | rewrites a 0.1 deck.ts into the 0.2 shape in place, comments kept |
 | `slides verify [url]` | checks a deployed site: the gate, the headers, the neutral root |
@@ -151,21 +151,36 @@ give a step of the type scale a new value; it may not add a step, and `slides bu
 raw `font-size` in a theme, on a slide naming a theme with no file, and on a theme file with no
 rule for its own name.
 
-**The presenter's light/dark switch.** A token a theme sets wins in both light and dark; a token
-it leaves alone follows the switch. A light theme that wants its own values in the dark adds a
-second rule, which outranks the first:
+**Grounds and the presenter's switch.** Every slide is drawn on a ground, light or dark, and the
+engine puts it beside the theme as `data-color-scheme`. A theme is light-first unless its base
+rule declares `color-scheme: dark`. The presenter's switch (`d`, the moon or sun beside Contents)
+means **the other ground**: a light slide turns dark, a slide in a dark-first theme turns to that
+theme's light variant, and the icon offers whichever the slide on screen would become. A token a
+theme sets wins on both grounds and a token it leaves alone follows the ground, so a variant
+only says what differs. Write it joined to the theme, because both attributes are on the same
+element:
 
 ```css
-[data-color-scheme="dark"] [data-deck-theme="paper"] { --hairline: #2f3232; }
+/* a light-first theme's dark values */
+[data-deck-theme="paper"][data-color-scheme="dark"] { --hairline: #2f3232; }
+/* a dark-first theme's light variant */
+[data-deck-theme="night"][data-color-scheme="light"] { color-scheme: light; --ink: #1d1d1f; }
 ```
 
-**A theme whose ground is dark** looks the same with the switch on or off, provided it sets the
-three things that cannot follow `--ink` on their own:
+**A dark-first theme** sets three things that cannot follow `--ink` on their own, and its light
+variant sets them back:
 
 - its card material (`--card-face`, `--card-edge`, `--surface`, `--solid` and friends), or light
   cards sit under its light type;
-- `color-scheme: dark`, which inline SVG figures read to swap their drawn palette for the tokens;
+- `color-scheme: dark`, which also marks the theme as dark-first and is what inline SVG figures
+  read to swap their drawn palette for the tokens;
 - `--mark-filter: invert(1)`, because the logo is an `<img>` of a black mark.
+
+A dark-first theme with no light variant stays dark when the switch is pressed.
+
+**The PDF** prints every slide on its own theme's ground, as written. `slides pdf <deck> --scheme
+light` (or `dark`) prints every slide on that ground instead, into `decks/<deck>/<deck>-light.pdf`
+unless `--out` says otherwise: the light leave-behind of a black deck.
 
 **Layout hooks.** A few things a theme may want to change are not colours or sizes, and the
 slide components' class names are hashed, so they are tokens too. Each is read with today's

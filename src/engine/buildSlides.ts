@@ -7,6 +7,7 @@
 // from it so that a slide's number means the same thing on screen, in the PDF and in an edit.
 // Reimplementing the flattening anywhere else would be another place to forget a slide kind.
 import type { Deck, FlatSlide, LooseSlide, Section, Slide, TocSection } from "./types";
+import { baseGround } from "./ground";
 
 /** `baseUrl` prefixes every asset path a slide points at. It defaults to the build's own base,
  *  which is "/<slug>/" in a deck build and what SlideShow and ExportView both want. The admin
@@ -56,7 +57,8 @@ export function buildSlides(deck: Deck, baseUrl?: string): { flat: FlatSlide[]; 
   /** One authored slide onto `flat`. Exhaustive over Slide["type"], so a kind added to the union
    *  and forgotten here is a type error rather than a slide that silently never renders. */
   const push = (c: Slide) => {
-    const meta = { number: num(c.number), handout: c.handout, theme: themeOf(c.theme) };
+    const theme = themeOf(c.theme);
+    const meta = { number: num(c.number), handout: c.handout, theme, ground: baseGround(theme) };
     switch (c.type) {
       case "title":
         flat.push({ kind: "title", eyebrow: c.eyebrow, headingHtml: c.headingHtml, sub: c.sub,
@@ -141,7 +143,8 @@ export function buildSlides(deck: Deck, baseUrl?: string): { flat: FlatSlide[]; 
     // table of contents and the nav should jump to.
     if (sec.divider !== false) {
       flat.push({ kind: "section", idx: sec.short ?? `Section ${n + 1}`, title: sec.title,
-                  tagline: sec.tagline, number: num(sec.number), handout: sec.handout, theme: themeOf(sec.theme) });
+                  tagline: sec.tagline, number: num(sec.number), handout: sec.handout, theme: themeOf(sec.theme),
+                  ground: baseGround(themeOf(sec.theme)) });
     }
     const items: { label: string; index: number }[] = [];
     for (const c of sec.slides) {

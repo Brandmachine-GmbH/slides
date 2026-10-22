@@ -10,15 +10,16 @@
  * may give a step of the type scale a new value for this theme; it may not add a step, and the
  * build fails on a raw font-size here as it does everywhere else.
  *
- * The presenter's light/dark switch (`d`): a token set here wins in both, and a token left alone
- * follows the switch. This theme is dark already, so pressing `d` leaves it as it is. A light
- * theme that wants its own values in the dark adds a second rule, which outranks this one:
- *   [data-color-scheme="dark"] [data-deck-theme="night"] { ... }
+ * The presenter's light/dark switch (`d`) means "the other ground". This theme declares
+ * `color-scheme: dark` in its base rule, which makes it dark-first, so pressing `d` on its slides
+ * brings up the light variant at the end of this file, and `slides pdf <deck> --scheme light`
+ * prints it. A light theme that wants its own values in the dark writes them the same way:
+ *   [data-deck-theme="<name>"][data-color-scheme="dark"] { ... }
  *
  * A dark theme has to set more than its ground and ink, because three things do not follow --ink:
  * the card material (a light card under light type loses its titles), `color-scheme: dark` (an
  * inline SVG figure swaps its drawn palette for the tokens on it), and --mark-filter (the logo is
- * an <img> of a black mark).
+ * an <img> of a black mark). The light variant sets each of them back.
  */
 [data-deck-theme="night"] {
   --stage-ground: #0b0b0c;
@@ -37,4 +38,21 @@
   --mark-filter: invert(1);
   --label-color: var(--muted);
   --chapter-rule: none;
+}
+
+/* The light variant: the same slide on paper. Only what differs from the rule above. */
+[data-deck-theme="night"][data-color-scheme="light"] {
+  color-scheme: light;
+  --mark-filter: none;
+  --stage-ground: #ffffff;
+  --ink: #181b1b;
+  --muted: #737373;
+  --copy-ink: #2c2f2f;
+  --note-ink: #5a5a5a;
+  --hairline: #e2ded7;
+  --surface: #ffffff;
+  --solid: #181b1b;
+  --card-face: linear-gradient(178deg, #ffffff 0%, #fdfbfa 60%, #faf6f1 100%);
+  --card-edge: #e8e1d7;
+  --card-edge-low: #ddd4c8;
 }

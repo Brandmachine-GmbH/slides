@@ -3,6 +3,33 @@
 Until 1.0, a minor version (0.2.0) may change something a site relies on, and says what here. A
 patch version (0.1.1) never does.
 
+## 0.3.0
+
+- **The presenter's switch means "the other ground".** A theme whose base rule declares
+  `color-scheme: dark` is dark-first: `d` turns its slides to its light variant, written as
+  `[data-deck-theme="<name>"][data-color-scheme="light"]`, and back. Light slides turn dark exactly
+  as before. On a deck mixing both, each slide turns to its own other ground, and the switch's
+  icon offers whatever the slide on screen would become. A dark-first theme with no light variant
+  still ignores the switch.
+- Every slide's ground element (the stage, each PDF page, each editor thumbnail, the passcode
+  screen) now carries `data-color-scheme` beside `data-deck-theme`, and the engine's dark tokens
+  apply there through `:where()`, so any theme rule on that element outranks them. A theme's
+  variant rules should be joined to the theme (`[data-deck-theme="x"][data-color-scheme="dark"]`)
+  rather than written under an ancestor; the ancestor form still works in the slideshow only.
+- The root's `data-color-scheme` follows the slide on screen, so the nav and the Contents panel
+  are dark on a dark-first deck by default.
+- **`slides pdf <deck> --scheme light|dark`** prints every slide on one ground, into
+  `decks/<deck>/<deck>-<scheme>.pdf` unless `--out` is given. Without it, nothing changes.
+- The passcode screen of a dark-first deck shows the theme's light variant to a viewer who has
+  flipped the deck; a light deck's screen stays light as before.
+- The switch now stores `"flip"`. A `"dark"` stored by 0.2 and earlier still darkens a light deck
+  and is ignored on a dark-first deck, so a deck that opened black keeps opening black.
+- A dark-first theme now draws on the engine's dark tokens by default, where it used to inherit
+  the light ones from `:root`. A theme that sets every token it uses (as it should) sees no
+  change; one that left some unset may see those parts render in their dark values.
+- Known limit: in a PDF without `--scheme`, a canvas scene on a dark-first page reads the light
+  scheme, while the slideshow reads dark. CSS-drawn slides are unaffected.
+
 ## 0.2.0
 
 **Breaking: every slide has a `type`, and the deck is one ordered `slides` list.** The engine no

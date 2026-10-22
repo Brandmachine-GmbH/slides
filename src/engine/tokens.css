@@ -139,16 +139,23 @@
    one fades in over it: a theme change is a dissolve from one ground to the other, never a frame
    of the wrong one.
 
-   THE DARK SCHEME AND A THEME. The scheme is set on :root (below) and a theme on an element under
-   it, so a token a theme sets wins in both schemes and a token it leaves alone follows the
-   scheme. A theme that is already dark therefore needs nothing: its ground stays its ground when
-   the presenter presses `d`. A theme that wants different values in the dark writes them under
-   [data-color-scheme="dark"] [data-deck-theme="<name>"], which outranks its light rule.
+   THE GROUND AND A THEME. Every slide is drawn on a ground, light or dark, and the engine puts it
+   on the slide's ground element as data-color-scheme, beside data-deck-theme (ground.ts decides
+   it). A theme is light-first unless its base rule declares `color-scheme: dark`. The presenter's
+   switch means "the other ground": dark for a light-first slide, light for a dark-first one.
 
-   A THEME WHOSE GROUND IS DARK has to say so twice, because two things on a slide cannot follow
-   --ink: `color-scheme: dark` (inline figures recolour their palette, see slides.module.css) and
-   --mark-filter (the logo is an <img>). The dark scheme sets both on :root; such a theme sets
-   both on itself, and then looks the same with the presenter's switch on or off.
+   A token a theme sets wins on both grounds and a token it leaves alone follows the ground, so a
+   theme only writes what differs. A light-first theme that wants its own values in the dark
+   writes them under [data-deck-theme="<name>"][data-color-scheme="dark"]; a dark-first theme
+   writes its light variant under [data-deck-theme="<name>"][data-color-scheme="light"]. Both
+   outrank the theme's base rule, and both sit on the one element that carries the two
+   attributes, which is why they are written joined rather than as ancestor and descendant. A
+   dark-first theme with no light rule stays dark when the switch is pressed.
+
+   A DARK-FIRST THEME sets three things that cannot follow --ink: `color-scheme: dark` (which is
+   also how the engine knows it is dark-first, and what inline figures read to recolour their
+   palette, see slides.module.css), --mark-filter (the logo is an <img>), and its card material.
+   Its light rule sets them back.
 
    A token whose default is another token (`var(--x)`) must not be declared on :root, or it is
    resolved there once and a theme that changes --x does not reach it. Read it as
@@ -156,10 +163,16 @@
 
 /* THE DARK SCHEME
    -------------------------------------------------------------------------
-   A second axis, independent of the deck's theme: the presenter flips it live from the
-   button beside Contents (or `d`), per viewer, and it never reaches the PDF or the editor,
-   because only SlideShow sets data-color-scheme. So a deck needs no edit to have it, and the
-   light version every client was sent stays exactly what it was.
+   The dark ground for every slide whose theme does not draw its own: the presenter turns a light
+   slide to it live from the button beside Contents (or `d`), per viewer, and an export can ask
+   for it (`slides pdf --scheme dark`). It never reaches the editor, and a deck needs no edit to
+   have it, so the light version every client was sent stays exactly what it was.
+
+   Two selectors, and the difference is what lets a theme win. On :root it is what the nav and
+   the Contents panel are drawn from, and it outranks the site's theme.css there, as it always
+   did. On a slide's own ground element it is wrapped in :where(), so it weighs nothing: a theme's
+   rule on that same element always beats it, which is how a dark-first theme keeps its own
+   black, and how a light-first theme's base values still lose to the theme's own dark rule.
 
    A deliberate dark studio, not an inversion. The ground is near-black with a trace of the ink's
    green-grey in it (pure #000 makes every photograph look pasted on), type is off-white rather
@@ -179,7 +192,7 @@
 
    Tokens that only a site theme defines get their dark values from that theme, not from here:
    the engine knows no theme, so it cannot know what a theme's own greys should become. */
-:root[data-color-scheme="dark"] {
+:root[data-color-scheme="dark"], :where([data-color-scheme="dark"]) {
   color-scheme: dark;
   --ink: #ecebe7;
   --muted: #9c9d99;

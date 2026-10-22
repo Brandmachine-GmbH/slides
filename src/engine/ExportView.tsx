@@ -1,6 +1,7 @@
 import type { Deck } from "./types";
 import { buildSlides } from "./buildSlides";
 import { SlideBody } from "./SlideBody";
+import { applyColorScheme } from "./colorScheme";
 import "@export-css"; // export.css in export builds, an empty stub in live builds (vite.config.ts)
 
 // Export/PDF mode: render every slide the deck would show, stacked as one print page each, with
@@ -22,6 +23,13 @@ export function ExportView({ deck }: { deck: Deck }) {
   // The handout band can be left out of a whole export (NOTES=off, see export-pdf.mjs): the file
   // is then a plain deck at the slide's own page size, with nothing of the presenter's in it.
   const notes = !import.meta.env.VITE_EXPORT_NO_NOTES;
+  // One ground for every page when the export asks for it (`slides pdf --scheme light|dark`, see
+  // export-pdf.mjs): the light PDF of a black deck, or a dark one of a light deck. Absent, each page
+  // is drawn on its own theme's ground, which is the deck as written and what it always printed.
+  const scheme = (import.meta.env.VITE_EXPORT_SCHEME || "") as "" | "light" | "dark";
+  // On the root as well when the whole document is one ground, because a scene that draws on a
+  // <canvas> reads its colours through useColorScheme, which watches the root.
+  if (scheme) applyColorScheme(scheme);
   const hasHandout = notes && flat.some((f) => f.handout);
   return (
     <>
@@ -37,7 +45,7 @@ export function ExportView({ deck }: { deck: Deck }) {
           {/* Each page carries its own slide's theme, because every page is in the document at
               once and there is no one theme the document could carry (THEMES in tokens.css). On
               the slide rather than the page, so a handout band under a dark slide stays paper. */}
-          <div className="bmx-slide" data-deck-theme={slide.theme}>
+          <div className="bmx-slide" data-deck-theme={slide.theme} data-color-scheme={scheme || slide.ground}>
             <SlideBody slide={slide} toc={toc} />
             {/* A printed page cannot play anything, and a still of a film or a demo reads as the
                 whole of it unless the page says otherwise. So those two kinds say where the

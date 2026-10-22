@@ -1,6 +1,6 @@
 // Export a deck to a vector PDF (one slide per page) using headless Chrome.
 //
-//   node scripts/export-pdf.mjs <deck> [--out <file.pdf>]   e.g. node scripts/export-pdf.mjs example
+//   node scripts/export-pdf.mjs <deck> [--out <file.pdf>] [--scheme light|dark]
 //
 // It spins up an ephemeral Vite dev server in export mode (VITE_EXPORT=1 -> stacked print pages,
 // static TTF fonts, no passcode gate), prints the page to PDF with system Chrome, then shuts the
@@ -21,14 +21,19 @@ import { tmpdir } from "node:os";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const userRoot = process.env.SLIDES_ROOT || process.cwd();
 const argv = process.argv.slice(2);
-const outAt = argv.indexOf("--out");
-const outArg = outAt >= 0 ? argv[outAt + 1] : undefined;
-const deckName = argv.find((a, i) => !a.startsWith("--") && (outAt < 0 || i !== outAt + 1));
+const valueOf = (flag) => { const at = argv.indexOf(flag); return at >= 0 ? argv[at + 1] ?? "" : undefined; };
+const outArg = valueOf("--out");
+// One ground for every page (see ExportView): the light PDF of a black deck, or the dark one of a
+// light deck. Absent, every page is printed on its own theme's ground, exactly as before.
+const scheme = valueOf("--scheme");
+const flagValues = new Set(["--out", "--scheme"].map((f) => argv.indexOf(f) + 1).filter((i) => i > 0));
+const deckName = argv.find((a, i) => !a.startsWith("--") && !flagValues.has(i));
 
-if (!deckName || (outAt >= 0 && !outArg)) {
-  console.error("usage: node scripts/export-pdf.mjs <deck> [--out <file.pdf>]");
+if (!deckName || outArg === "" || (scheme !== undefined && scheme !== "light" && scheme !== "dark")) {
+  console.error("usage: node scripts/export-pdf.mjs <deck> [--out <file.pdf>] [--scheme light|dark]");
   process.exit(1);
 }
+process.env.VITE_EXPORT_SCHEME = scheme ?? "";
 if (!existsSync(join(userRoot, "decks", deckName, "deck.ts"))) {
   console.error(`no such deck: decks/${deckName}/deck.ts`);
   process.exit(1);
@@ -178,9 +183,11 @@ try {
   }, { retina: RETINA, quality: JPEG_QUALITY, maxPx: MAX_PX });
   console.log(`images: ${stats.downscaled}/${stats.total} downscaled`, stats.skipped.length ? "| skipped: " + JSON.stringify(stats.skipped) : "");
 
+  // A scheme gets its own file by default, like the no-notes version, so asking for the light PDF
+  // never overwrites the one that matches the deck as written.
   const out = outArg
     ? resolve(outArg)
-    : join(userRoot, "decks", deckName, `${deckName}${noNotes ? "-no-notes" : ""}.pdf`);
+    : join(userRoot, "decks", deckName, `${deckName}${scheme ? `-${scheme}` : ""}${noNotes ? "-no-notes" : ""}.pdf`);
   mkdirSync(dirname(out), { recursive: true });
   await page.pdf({
     path: out,

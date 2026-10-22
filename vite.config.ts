@@ -217,27 +217,53 @@ function stripJobs(): PluginOption {
  * build.mjs checks the names and the scoping. */
 const themesDir = join(userRoot, "themes");
 const THEME_FILE = /^[a-z0-9-]+\.css$/;
+/** The themes whose own ground is dark: their base rule, the one selected by
+ *  [data-deck-theme="<name>"] alone, declares `color-scheme: dark`. That property was already how
+ *  such a theme told inline figures it is dark (see tokens.css), so it doubles as the declaration
+ *  rather than adding a second flag that could disagree with it. The engine needs the list in
+ *  JavaScript because the presenter's light/dark switch means "the other ground" (see ground.ts),
+ *  and which ground is the other one depends on it. */
+function darkFirstThemes(files: string[]): string[] {
+  return files.flatMap((f) => {
+    const name = f.slice(f.lastIndexOf(sep) + 1, -".css".length);
+    const css = readFileSync(f, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    const own = new RegExp(`^\\[data-deck-theme=(?:"${name}"|'${name}'|${name})\\]$`);
+    const dark = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].some(([, sel, body]) =>
+      sel.split(",").some((x) => own.test(x.trim())) && /(^|;|\s)color-scheme\s*:\s*dark\b/.test(body));
+    return dark ? [name] : [];
+  });
+}
+
 function siteThemes(): PluginOption {
   const id = "\0site-themes";
   const files = () => existsSync(themesDir)
     ? readdirSync(themesDir).filter((f) => THEME_FILE.test(f)).sort().map((f) => join(themesDir, f))
     : [];
+  let darkFirst = "";
   return {
     name: "site-themes",
     resolveId: (source) => (source === "@site-themes" ? id : null),
-    load: (loaded) => (loaded === id ? files().map((f) => `import ${JSON.stringify(f)};`).join("\n") + "\n" : null),
-    // Editing a theme is ordinary CSS HMR. Adding or deleting one changes the list itself, which
-    // only this module knows, so without this a new theme needed the dev server restarted.
+    load: (loaded) => {
+      if (loaded !== id) return null;
+      const list = files();
+      darkFirst = JSON.stringify(darkFirstThemes(list));
+      return list.map((f) => `import ${JSON.stringify(f)};`).join("\n") + `\nexport const DARK_FIRST = ${darkFirst};\n`;
+    },
+    // Editing a theme is ordinary CSS HMR. Adding or deleting one changes the list itself, and
+    // editing one can change which themes are dark-first, both of which only this module knows,
+    // so those reload the page; without this they needed the dev server restarted.
     configureServer(server) {
       server.watcher.add(themesDir);
-      const relist = (file: string) => {
+      const relist = (file: string, always: boolean) => {
         if (dirname(file) !== themesDir) return;
+        if (!always && JSON.stringify(darkFirstThemes(files())) === darkFirst) return;
         const mod = server.moduleGraph.getModuleById(id);
         if (mod) server.moduleGraph.invalidateModule(mod);
         server.ws.send({ type: "full-reload" });
       };
-      server.watcher.on("add", relist);
-      server.watcher.on("unlink", relist);
+      server.watcher.on("add", (f) => relist(f, true));
+      server.watcher.on("unlink", (f) => relist(f, true));
+      server.watcher.on("change", (f) => relist(f, false));
     },
   };
 }
