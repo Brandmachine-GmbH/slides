@@ -1,6 +1,6 @@
 {
   "name": "@brandmachine/slides",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A slideshow engine for client decks: each deck is data in decks/<name>/, built to its own bundle and served at a secret per-deck URL.",
   "license": "MIT",
   "type": "module",
@@ -37,6 +37,9 @@
     "index.html",
     "src/",
     "hub/",
+    "plugin/skills/",
+    "template/AGENTS.md",
+    "template/CLAUDE.md",
     "template/decks/",
     "!template/decks/*/*.pdf",
     "template/netlify/edge-functions/admin.ts",

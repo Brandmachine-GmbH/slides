@@ -3,6 +3,16 @@
 Until 1.0, a minor version (0.2.0) may change something a site relies on, and says what here. A
 patch version (0.1.1) never does.
 
+## 0.3.1
+
+- **An agent skill.** `plugin/skills/slides/SKILL.md` is the manual for an agent making decks:
+  setting up a site, writing `deck.ts`, checking, exporting and publishing, and the rules that
+  keep a deck private. It installs as a Claude Code plugin from this repository and as a Codex
+  skill, and it ships in the package.
+- `slides init` also writes `AGENTS.md` and a `CLAUDE.md` that loads it, pointing an agent at
+  the skill inside `node_modules`. Like every file `init` writes, neither replaces one that
+  already exists.
+
 ## 0.3.0
 
 - **The presenter's switch means "the other ground".** A theme whose base rule declares

@@ -1,0 +1,9 @@
+{
+  "name": "slides",
+  "description": "Make, preview, export and publish client slide decks with @brandmachine/slides.",
+  "author": { "name": "Brandmachine GmbH" },
+  "homepage": "https://github.com/Brandmachine-GmbH/slides",
+  "repository": "https://github.com/Brandmachine-GmbH/slides",
+  "license": "MIT",
+  "keywords": ["slides", "deck", "presentation"]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "brandmachine",
+  "description": "Agent skills for the @brandmachine/slides deck engine.",
+  "owner": {
+    "name": "Brandmachine GmbH",
+    "url": "https://github.com/Brandmachine-GmbH"
+  },
+  "plugins": [
+    {
+      "name": "slides",
+      "source": "./plugin",
+      "description": "Make, preview, export and publish client slide decks with @brandmachine/slides."
+    }
+  ]
+}

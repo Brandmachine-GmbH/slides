@@ -9,6 +9,19 @@ real selectable text, and a copy editor that emits a diff rather than writing to
 you want a general presentation framework, this is not it. If you present to clients and you
 already work in a repo, it will feel like the right shape.
 
+## With an agent
+
+Point Claude Code or Codex at this repository and say what deck you want. The manual it needs is
+`plugin/skills/slides/SKILL.md`, and both agents can install it as a skill:
+
+- **Claude Code:** `/plugin marketplace add Brandmachine-GmbH/slides`, then
+  `/plugin install slides@brandmachine`.
+- **Codex:** `$skill-installer install https://github.com/Brandmachine-GmbH/slides/tree/main/plugin/skills/slides`.
+
+The skill starts from an empty folder and does the Quick start below for you. Every site that
+`slides init` sets up also gets an `AGENTS.md` (and a `CLAUDE.md` that loads it), pointing at the
+copy of the skill inside `node_modules`, which always matches the engine version the site runs.
+
 ## Quick start
 
 In an empty folder:

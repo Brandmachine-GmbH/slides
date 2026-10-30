@@ -64,6 +64,17 @@ try {
   if (slug === published) throw new Error("slides init kept the published example slug");
   step("slides init: template written, example given its own slug");
 
+  // The site's AGENTS.md is only a pointer, so that it cannot go stale against the engine it
+  // describes. A pointer is also the one thing that can break silently: rename the skill's folder
+  // or drop it from `files`, and every new site sends its agent to a file that does not exist.
+  const agents = readFileSync(join(site, "AGENTS.md"), "utf8");
+  const skillPath = agents.match(/node_modules\/@brandmachine\/slides\/\S+?SKILL\.md/)?.[0];
+  if (!skillPath || !existsSync(join(site, skillPath))) {
+    throw new Error(`AGENTS.md points agents at ${skillPath ?? "no skill"}, which the installed package does not have`);
+  }
+  if (!existsSync(join(site, "CLAUDE.md"))) throw new Error("slides init wrote no CLAUDE.md");
+  step("slides init: AGENTS.md points at the skill the package ships");
+
   slides("new", "acme");
   if (!existsSync(join(site, "decks", "acme", "slug.txt"))) throw new Error("slides new wrote no slug");
   step("slides new acme");
