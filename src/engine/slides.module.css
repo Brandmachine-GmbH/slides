@@ -74,7 +74,7 @@
 .agendaThumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s cubic-bezier(.2,.7,.2,1); }
 .agendaPicRow:hover .agendaThumb img { transform: scale(1.04); }
 
-/* divider: a section's opening slide, and the statement slide a deck places with `divider: true`.
+/* divider: a section's opening slide, and the statement slide a deck places as `type: "divider"`.
    --divider-align lets a theme centre both (it is used for align-items and text-align, so
    `center` is the one value that means the same to each), and --divider-kicker (a `display`
    value) lets it drop the section kicker, "Section 2" or the section's `short`, for a register

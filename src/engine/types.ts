@@ -44,7 +44,7 @@ export interface SlideMeta {
    *  a meeting where nobody reads it and it competes with the person talking.
    *
    *  So: strip the slide, put the sentence you would have said here, and the sent deck loses
-   *  nothing. Two or three sentences. `make build` fails past 320 characters, because the band
+   *  nothing. Two or three sentences. `slides build` fails past 320 characters, because the band
    *  it prints into is a fixed height and silently clipping a client's copy is worse than
    *  refusing to build. */
   handout?: string;
@@ -108,8 +108,8 @@ export interface SlideContent extends SlideMeta {
   /** The small uppercase label above the headline.
    *
    *  A SIGNPOST, not a second headline: it says where you are, and the headline says the
-   *  takeaway. See VOICE.md section 2, including the note on the rule that used to say the
-   *  opposite. Plain nouns are correct here and usually best ("Product overview", "The terms").
+   *  takeaway. See plugin/skills/slides/writing.md. Plain nouns are correct here and usually
+   *  best ("Product overview", "The terms").
    *
    *  This was called `group` on content and plan slides and `eyebrow` on every other kind, for
    *  the same element in the same place with the same styling. Two names for one thing meant
@@ -127,7 +127,7 @@ export interface SlideContent extends SlideMeta {
    *  already carries a video, a photograph, a drawing or a scene, the picture IS the body copy.
    *  Write the sentence, then delete it and check whether anything was actually lost; most of
    *  the time the same sentence belongs in `handout`, which prints in the PDF and never appears
-   *  on screen. `make build` reports anything over 240 characters. VOICE.md section 4. */
+   *  on screen. `slides build` reports anything over 240 characters. See plugin/skills/slides/writing.md. */
   paragraph?: string;
   /** body copy as a bullet list; rendered instead of `paragraph` when present. */
   bullets?: string[];
@@ -169,8 +169,8 @@ export interface SlidePlan extends SlideMeta {
   /** The small uppercase label above the headline.
    *
    *  A SIGNPOST, not a second headline: it says where you are, and the headline says the
-   *  takeaway. See VOICE.md section 2, including the note on the rule that used to say the
-   *  opposite. Plain nouns are correct here and usually best ("Product overview", "The terms").
+   *  takeaway. See plugin/skills/slides/writing.md. Plain nouns are correct here and usually
+   *  best ("Product overview", "The terms").
    *
    *  This was called `group` on content and plan slides and `eyebrow` on every other kind, for
    *  the same element in the same place with the same styling. Two names for one thing meant
@@ -342,9 +342,9 @@ export interface SceneStep {
   ours?: boolean;
   /** 0-100: where this step sits along a scene's own axis, as a percentage of it.
    *
-   *  Only scenes that plot their steps against something read it. `shoot-when` is a time axis,
-   *  so the position IS the argument and the deck has to own it; a scene that simply lays its
-   *  steps out in a row (the value chain) ignores this entirely. */
+   *  Only scenes that plot their steps against something read it. On a time axis the position
+   *  IS the argument, so the deck has to own it; a scene that simply lays its
+   *  steps out in a row ignores this entirely. */
   at?: number;
   /** an icon name, for a scene that draws one. Lucide, kebab-case, e.g. "factory". */
   icon?: string;
@@ -355,23 +355,10 @@ export interface SceneStep {
 }
 
 /** A closing line a scene builds to. `from` and `to` are step indexes, inclusive, for a scene
- *  that draws the line under a SPAN of its steps (the value chain does); a scene that simply
+ *  that draws the line under a SPAN of its steps (a value chain, say); a scene that simply
  *  ends on a sentence leaves them out. */
 export interface SceneClaim { text: string; from?: number; to?: number }
 
-/** A hand-built slide: a drawing the ENGINE renders, rather than one the deck supplies as a file.
- *
- *  A `figure` block is the deck's picture, inlined. A scene is the reverse, the engine's
- *  component filled with the deck's copy, and the trade is real in both directions. A figure can
- *  be drawn by whoever writes the deck and needs no engine change; a scene cannot, and in
- *  exchange it can hover, build, lay its own type out live and hold something that moves.
- *
- *  Reach for a scene when a drawing carries an argument the deck leans on, and for a figure
- *  when it explains something once. There should be very few scenes.
- *
- *  Named the way a mockup is (`name: "shot-planner"`) rather than pointing at a component, so
- *  deck.ts stays data: the editor, the PDF and the contact sheet all keep working, and no deck
- *  can import code. */
 /** What every scene component is handed. A new scene implements this and nothing else. */
 export interface SceneProps {
   steps: SceneStep[];
@@ -383,9 +370,23 @@ export interface SceneProps {
   controllerRef?: { current: StoryController | null };
 }
 
+/** A hand-built slide: a drawing a COMPONENT renders, rather than one the deck supplies as a file.
+ *
+ *  A `figure` block is the deck's picture, inlined. A scene is the reverse, a component (usually
+ *  the deck's own, in decks/<deck>/scenes/) filled with the deck's copy, and the trade is real in
+ *  both directions. A figure can be drawn by whoever writes the deck and needs no code; a scene
+ *  cannot, and in exchange it can hover, build, lay its own type out live and hold something
+ *  that moves.
+ *
+ *  Reach for a scene when a drawing carries an argument the deck leans on, and for a figure
+ *  when it explains something once. There should be very few scenes.
+ *
+ *  Named the way a mockup is (`name: "shot-planner"`) rather than pointing at a component, so
+ *  deck.ts stays data: the editor, the PDF and the contact sheet all keep working, and no deck
+ *  can import code. */
 export interface SlideScene extends SlideMeta {
   type: "scene";
-  /** A key in the deck's scenes/index.ts, e.g. "value-chain" (or an engine scene's file name,
+  /** A key in the deck's scenes/index.ts, e.g. "timeline" (or an engine scene's file name,
    *  kebab-cased). Typed from the site's registries (see SlidesSiteNames above), and checked by
    *  the build as well, which also catches a deck still naming a scene since deleted. */
   name: SceneName;
@@ -405,10 +406,10 @@ export interface SlideScene extends SlideMeta {
      the mockup. A scene that needs a shape nobody else does says so here rather than inventing a
      parallel way in, and the name says which scene it serves. */
 
-  /** "season-math": the figure the arithmetic comes to, revealed on the last beat. Its `title`
+  /** For an arithmetic scene: the figure the sum comes to, revealed on the last beat. Its `title`
    *  is the answer ("400 hours") and its `tag` the unit under it. */
   answer?: SceneStep;
-  /** "season-math": how many months of one person that is, which is how far the calendar burns.
+  /** For an arithmetic scene: how many months of one person that is, e.g. how far a calendar fills.
    *  Authored rather than derived, because the assumption behind it (what a working month is)
    *  belongs in the deck's argument and not in the engine. */
   months?: number;

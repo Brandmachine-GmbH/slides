@@ -3,6 +3,20 @@
 Until 1.0, a minor version (0.2.0) may change something a site relies on, and says what here. A
 patch version (0.1.1) never does.
 
+## 0.3.2
+
+- **The skill grows three references** beside `SKILL.md`: `writing.md` (jobs, the deck's header
+  note, headlines, budgets, numbers), `design.md` (the accent, the type scale, pictures, motion,
+  themes including dark-first and stage-sized ones) and `scenes.md` (staged figures, writing a
+  scene component with the patterns that worked, and driven mockups). `SKILL.md` adds the
+  `/admin` review loop, presenting keys, deep links, media sizes, placeholders, recipes for
+  common slides, what the checks do not catch, and a first-publish walkthrough.
+- The example scene now plays its `claim` as a last beat and draws text on its lit box with
+  `--on-ink`, so it reads on the dark ground.
+- Documentation only: stale references in `types.ts` and the README (private file names, scene
+  names, a `divider: true` field that no longer exists) are gone. Nothing a deck relies on
+  changes.
+
 ## 0.3.1
 
 - **An agent skill.** `plugin/skills/slides/SKILL.md` is the manual for an agent making decks:

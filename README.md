@@ -205,7 +205,7 @@ value as its fallback, so a theme that does not set it changes nothing:
 | `--caption-inset`, `--caption-width`, `--caption-padding` | where the caption sits and how wide | `48px`, `452px`, the card's padding |
 | `--caption-scrim` | a background drawn over the pictures and under the caption, e.g. a bottom gradient | `none` |
 | `--type-show-caption` | the caption title's size, as a step of the scale (`var(--type-title)`) | `var(--type-subhead)` |
-| `--divider-align` | `center` centres section dividers and `divider: true` statement slides | left |
+| `--divider-align` | `center` centres section dividers and `divider` slides (the statement slide) | left |
 | `--divider-kicker` | `none` hides the "Section 2" (or `short`) kicker above a section divider | shown |
 
 The glass card is the default for a reason: a scrim faint enough for a dark photograph vanishes

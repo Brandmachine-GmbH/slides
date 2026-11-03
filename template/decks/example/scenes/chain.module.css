@@ -22,9 +22,11 @@
 .lit {
   background: var(--ink);
   border-color: var(--ink);
-  color: #fff;
+  /* --on-ink is defined only for the dark ground, so it is read with the light value as its
+     fallback; a literal white here would stay white when --ink flips to near-white. */
+  color: var(--on-ink, #fff);
 }
-.lit .note { color: rgba(255, 255, 255, 0.72); }
+.lit .note { color: inherit; opacity: 0.72; }
 
 .tag {
   margin: 0 0 10px;
@@ -37,8 +39,6 @@
 
 .title {
   margin: 0 0 8px;
-  font-family: "Playfair Display", serif;
-  font-weight: 400;
   font-size: var(--type-subhead);
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -50,3 +50,25 @@
   line-height: 1.45;
   color: var(--muted);
 }
+
+/* The scene is a flex child of the slide, under its heading. Growing into the space left is what
+   lets a drawing use the full height; without it the scene is only as tall as its content. */
+.scene {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 28px;
+}
+
+.claim {
+  margin: 0;
+  font-size: var(--type-body);
+  line-height: 1.4;
+  color: var(--copy-ink);
+  transition: opacity 220ms ease;
+}
+
+/* Hidden rather than removed, so the boxes do not move up and back when the claim arrives. */
+.hidden { opacity: 0; }
