@@ -33,6 +33,8 @@
 }
 .segLabel:hover { color: rgba(255,255,255,0.86); }
 .segActive .segLabel { color: #fff; }
+/* Equal-width digits, so the count does not shift sideways on every slide. */
+.segCount { font-variant-numeric: tabular-nums; }
 
 .ticks { display: flex; align-items: center; justify-content: center; gap: 5px; height: 6px; }
 .tick {

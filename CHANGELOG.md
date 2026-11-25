@@ -3,6 +3,13 @@
 Until 1.0, a minor version (0.2.0) may change something a site relies on, and says what here. A
 patch version (0.1.1) never does.
 
+## 0.3.3
+
+- **A deck without sections shows the slide count in the bottom bar**, "3 / 14", instead of
+  "Title". Such a deck is one run of loose slides, and the bar named that run after its first
+  slide, so "Title" stood there for the whole meeting. Hovering the count reads "Slide 3 of 14".
+  Decks with sections are unchanged.
+
 ## 0.3.2
 
 - **The skill grows three references** beside `SKILL.md`: `writing.md` (jobs, the deck's header

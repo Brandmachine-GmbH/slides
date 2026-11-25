@@ -4,14 +4,18 @@ import type { LooseSlide, TocSection } from "./types";
 import s from "./SegNav.module.css";
 
 interface Tick { index: number; label: string; }
-interface Segment { label: string; firstIndex: number; ticks: Tick[]; }
+interface Segment { label: string; firstIndex: number; ticks: Tick[]; counter?: boolean; }
 
 /** Segments in deck order: each section, and each run of loose slides between them (LooseSlide).
  *
  *  A run before the first section is "Intro" and a run after the last is "Outro", which is what
  *  the title and the end slide were called when the engine placed them itself; a run between two
  *  sections is named after its first slide. An end slide's tick reads "Thank you", the word the
- *  room sees it as. */
+ *  room sees it as.
+ *
+ *  A deck without sections is one run, and naming it after its first slide put "Title" on the bar
+ *  for the whole meeting. That run shows the slide count instead: with nothing to name, where you
+ *  are is the one thing the label can still say, and it reads the same in every language. */
 function buildSegments(toc: TocSection[], loose: LooseSlide[]): Segment[] {
   type Entry = { at: number; seg: Segment; run: boolean };
   const entries: Entry[] = toc.map((sec) => {
@@ -42,8 +46,12 @@ function buildSegments(toc: TocSection[], loose: LooseSlide[]): Segment[] {
   entries.sort((a, b) => a.at - b.at);
   const firstSection = entries.findIndex((e) => !e.run);
   const lastSection = entries.length - 1 - [...entries].reverse().findIndex((e) => !e.run);
+  if (firstSection === -1) {
+    for (const e of entries) e.seg.counter = true;
+    return entries.map((e) => e.seg);
+  }
   entries.forEach((e, i) => {
-    if (!e.run || firstSection === -1) return;
+    if (!e.run) return;
     if (i < firstSection) e.seg.label = "Intro";
     else if (i > lastSection) e.seg.label = "Outro";
   });
@@ -109,10 +117,19 @@ export function SegNav({ toc, loose, current, onJump }: Props) {
       {segs.map((seg, n) => {
         const last = seg.ticks[seg.ticks.length - 1].index;
         const active = current >= seg.firstIndex && current <= last;
+        const label = seg.counter
+          ? `${seg.ticks.findIndex((t) => t.index === current) + 1} / ${seg.ticks.length}`
+          : seg.label;
+        const hint = seg.counter ? `Slide ${label.replace(" / ", " of ")}` : seg.label;
         return (
           <div key={n} ref={active ? activeRef : undefined} className={`${s.seg}${active ? ` ${s.segActive}` : ""}`}>
-            <button className={s.segLabel} title={seg.label} onClick={() => onJump(seg.firstIndex)}>
-              {seg.label}
+            <button
+              className={`${s.segLabel}${seg.counter ? ` ${s.segCount}` : ""}`}
+              title={hint}
+              aria-label={hint}
+              onClick={() => onJump(seg.firstIndex)}
+            >
+              {label}
             </button>
             <div className={s.ticks}>
               {active && seg.ticks.map((t) => {
