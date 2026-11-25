@@ -230,11 +230,17 @@
     radial-gradient(ellipse 46% 50% at 88% 86%, rgba(244,194,255,0.09), transparent 62%),
     radial-gradient(ellipse 40% 42% at 90% 14%, rgba(255,179,122,0.08), transparent 60%);
 }
+/* The presenter's surround switch (surround.ts). Not set for black, so the near-black fallback on
+   html and body below stays the one place that colour is written. The grey is a true mid grey
+   rather than a light one, so each of the three steps looks clearly different from the last. */
+:root[data-surround="grey"] { --surround: #808080; }
+:root[data-surround="white"] { --surround: #ffffff; }
+
 * { box-sizing: border-box; }
 html, body, #root { margin: 0; height: 100%; }
 html, body {
   overflow: hidden;
-  background: #0c0c0d;
+  background: var(--surround, #0c0c0d);
   font-family: "Inter", system-ui, sans-serif;
   color: var(--ink);
 }

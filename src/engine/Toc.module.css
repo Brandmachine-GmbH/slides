@@ -21,6 +21,12 @@
    as a switch beside a menu rather than as a second menu. */
 .scheme { display: inline-flex; align-items: center; justify-content: center; padding: 0 11px; }
 .scheme svg { width: 14px; height: 14px; display: block; }
+/* The surround switch's swatch: the same 14px as the icons beside it. The ring keeps black
+   visible on the dark glass of the button. Colours repeat tokens.css because the swatch must
+   show the value even where --surround is unset (black). */
+.swatch { width: 14px; height: 14px; border-radius: 50%; display: block; box-shadow: 0 0 0 1.5px rgba(255,255,255,0.86); background: #0c0c0d; }
+.swatch[data-surround="grey"] { background: #808080; }
+.swatch[data-surround="white"] { background: #ffffff; }
 
 .scrim { position: fixed; inset: 0; z-index: 30; background: rgba(10,10,12,0.5); opacity: 0; pointer-events: none; transition: opacity 0.25s; }
 .scrimOpen { opacity: 1; pointer-events: auto; }

@@ -3,6 +3,15 @@
 Until 1.0, a minor version (0.2.0) may change something a site relies on, and says what here. A
 patch version (0.1.1) never does.
 
+## 0.3.4
+
+- **The presenter can change the colour around a letterboxed slide**: `b`, or the round swatch
+  beside Contents, steps through black (the default), grey and white. It is remembered per deck
+  in this browser, like the light/dark switch, and a viewer who never presses it sees black as
+  before. Only the live slideshow uses it; the PDF, the passcode screen and the editor are
+  unchanged. Some presenter remotes send `b` from their blank-screen button, which now changes
+  the surround instead.
+
 ## 0.3.3
 
 - **A deck without sections shows the slide count in the bottom bar**, "3 / 14", instead of

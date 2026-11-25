@@ -411,6 +411,7 @@ want you to commit as you go.
 | `f` | fullscreen |
 | `d` | the other ground (light or dark), remembered per deck in this browser |
 | `s` | steps on or off: off, every staged slide arrives complete and Space moves whole slides, for jumping around a deck you are not rehearsing |
+| `b` | the colour around a letterboxed slide: black (the default), grey, white, remembered per deck in this browser. Some presenter remotes send `b` from their blank-screen button |
 | Home, End | first, last slide |
 
 On a `viewer` slide, clicking the preview opens the full-screen inspector: the arrow keys switch

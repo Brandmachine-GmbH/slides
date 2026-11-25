@@ -1,5 +1,6 @@
 import type { LooseSlide, TocSection } from "./types";
 import type { ColorScheme } from "./colorScheme";
+import { nextSurround, type Surround } from "./surround";
 import s from "./Toc.module.css";
 
 // Lucide's "moon" and "sun" (ISC licence, see THIRD-PARTY.md), inlined rather than imported from
@@ -23,9 +24,14 @@ interface Props {
   onToggleScheme: () => void;
   steps: boolean;
   onToggleSteps: () => void;
+  surround: Surround;
+  onCycleSurround: () => void;
 }
 
-export function Toc({ toc, loose, current, open, onToggle, onClose, onJump, scheme, onToggleScheme, steps, onToggleSteps }: Props) {
+const SURROUND_NAME: Record<Surround, string> = { black: "Black", grey: "Grey", white: "White" };
+
+export function Toc({ toc, loose, current, open, onToggle, onClose, onJump, scheme, onToggleScheme, steps, onToggleSteps, surround, onCycleSurround }: Props) {
+  const nextName = SURROUND_NAME[nextSurround(surround)];
   const cls = (base: string, active: boolean) => `${base}${active ? ` ${s.current}` : ""}`;
   return (
     <>
@@ -85,6 +91,18 @@ export function Toc({ toc, loose, current, open, onToggle, onClose, onJump, sche
           onClick={(e) => { e.stopPropagation(); onToggleSteps(); }}
         >
           {steps ? LIST_ORDERED : LIST}
+        </button>
+        {/* Shows the CURRENT surround as a swatch, like the steps button shows its current mode:
+            a colour is quicker to read than an icon standing for one, and with three values a
+            "where it takes you" icon would need the viewer to know the order. The title names
+            the next one for anyone who hovers. */}
+        <button
+          className={`${s.btn} ${s.scheme}`}
+          aria-label={`Background ${SURROUND_NAME[surround].toLowerCase()}: switch to ${nextName.toLowerCase()} (b)`}
+          title={`Background: ${nextName} (b)`}
+          onClick={(e) => { e.stopPropagation(); onCycleSurround(); }}
+        >
+          <span className={s.swatch} data-surround={surround} aria-hidden="true" />
         </button>
         <button className={s.btn} onClick={(e) => { e.stopPropagation(); onToggle(); }}>Contents</button>
       </div>

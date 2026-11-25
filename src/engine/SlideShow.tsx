@@ -11,6 +11,7 @@ import { Viewer } from "./Viewer";
 import { applyColorScheme, readStoredFlip, storeFlip } from "./colorScheme";
 import { baseGround, groundOf } from "./ground";
 import { readStoredSteps, storeSteps, StepsCtx } from "./buildSteps";
+import { applySurround, nextSurround, readStoredSurround, storeSurround, type Surround } from "./surround";
 import s from "./SlideShow.module.css";
 import "./transitions.css";
 
@@ -187,6 +188,21 @@ export function SlideShow({ deck }: { deck: Deck }) {
     setFlipped((cur) => {
       storeFlip(!cur);
       return !cur;
+    });
+  }, []);
+  // The colour around a letterboxed slide, remembered per deck (see surround.ts). Applied before
+  // paint for the same reason as the ground above: a presenter who left a deck on white must not
+  // get one black frame on reopening it.
+  const [surround, setSurround] = useState<Surround>(readStoredSurround);
+  useLayoutEffect(() => {
+    applySurround(surround);
+    return () => applySurround("black");
+  }, [surround]);
+  const cycleSurround = useCallback(() => {
+    setSurround((cur) => {
+      const next = nextSurround(cur);
+      storeSurround(next);
+      return next;
     });
   }, []);
   // Whether staged slides play beat by beat, remembered across every deck (see buildSteps.ts).
@@ -430,6 +446,11 @@ export function SlideShow({ deck }: { deck: Deck }) {
       if (e.key.toLowerCase() === "d" && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); toggleScheme(); return; }
       // `s` for steps, a letter for the same reason as `d`. Cmd+S is left to the browser.
       if (e.key.toLowerCase() === "s" && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); toggleSteps(); return; }
+      // `b` for background. Unlike `d` and `s`, some presenter remotes DO send it, from their
+      // "blank screen" button. Chosen anyway because it is the letter people guess: on such a
+      // remote that button changes the surround instead of blanking, which is visible, harmless
+      // and undone by pressing it twice more.
+      if (e.key.toLowerCase() === "b" && !e.metaKey && !e.ctrlKey && !e.altKey) { e.preventDefault(); cycleSurround(); return; }
       if (tocOpen) return;
       // Two verbs, on two sets of keys, split by what is in your hand rather than by symbol.
       //
@@ -462,7 +483,7 @@ export function SlideShow({ deck }: { deck: Deck }) {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [i, tocOpen, viewerAt, flat.length, show, toggleScheme, toggleSteps]);
+  }, [i, tocOpen, viewerAt, flat.length, show, toggleScheme, toggleSteps, cycleSurround]);
 
   const slide = flat[i];
 
@@ -533,6 +554,8 @@ export function SlideShow({ deck }: { deck: Deck }) {
         onToggleScheme={toggleScheme}
         steps={steps}
         onToggleSteps={toggleSteps}
+        surround={surround}
+        onCycleSurround={cycleSurround}
       />
 
       {stepsNotice && (
